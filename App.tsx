@@ -20,6 +20,7 @@ import {
   chatService, 
   notificationsService 
 } from './services/database';
+import { supabase } from './lib/supabase';
 
 // Global state for demo purposes
 interface AppState {
@@ -51,26 +52,105 @@ const App: React.FC = () => {
 
   // Load data from Supabase on app start
   useEffect(() => {
-    loadAppData();
-    checkAuthState();
+    initializeApp();
   }, []);
 
-  const checkAuthState = async () => {
-    const currentUser = await authService.getCurrentUser();
-    if (currentUser) {
-      const { data: userData } = await usersService.getUserByEmail(currentUser.email!);
-      if (userData) {
-        setUser({
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.display_name,
-          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-          role: userData.role as 'editor' | 'moderator' | 'owner',
-          approved: userData.approved
-        });
-        setCurrentPage('dashboard');
-      }
+  const initializeApp = async () => {
+    setLoading(true);
+    try {
+      // Check if user is already logged in
+      await checkAuthState();
+      // Load all app data
+      await loadAppData();
+      // Set up real-time subscriptions
+      setupRealtimeSubscriptions();
+    } catch (error) {
+      console.error('Error initializing app:', error);
     }
+    setLoading(false);
+  };
+
+  const checkAuthState = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: userData } = await usersService.getUserByEmail(session.user.email!);
+        if (userData && userData.approved) {
+          setUser({
+            uid: userData.uid,
+            email: userData.email,
+            displayName: userData.display_name,
+            photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
+            role: userData.role as 'editor' | 'moderator' | 'owner',
+            approved: userData.approved
+          });
+          setCurrentPage('dashboard');
+        } else if (userData && !userData.approved) {
+          setCurrentPage('approval');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking auth state:', error);
+    }
+  };
+
+  const setupRealtimeSubscriptions = () => {
+    // Subscribe to chat messages
+    const chatSubscription = supabase
+      .channel('chat_messages')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          setAppState(prev => ({
+            ...prev,
+            chatMessages: [...prev.chatMessages, payload.new]
+          }));
+        }
+      )
+      .subscribe();
+
+    // Subscribe to notifications
+    const notificationSubscription = supabase
+      .channel('notifications')
+      .on('postgres_changes', 
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        (payload) => {
+          setAppState(prev => ({
+            ...prev,
+            notifications: [payload.new, ...prev.notifications]
+          }));
+        }
+      )
+      .subscribe();
+
+    // Subscribe to applications
+    const applicationSubscription = supabase
+      .channel('applications')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'applications' },
+        () => {
+          loadAppData(); // Refresh all data when applications change
+        }
+      )
+      .subscribe();
+
+    // Subscribe to tasks
+    const taskSubscription = supabase
+      .channel('tasks')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'tasks' },
+        () => {
+          loadAppData(); // Refresh all data when tasks change
+        }
+      )
+      .subscribe();
+
+    return () => {
+      chatSubscription.unsubscribe();
+      notificationSubscription.unsubscribe();
+      applicationSubscription.unsubscribe();
+      taskSubscription.unsubscribe();
+    };
   };
 
   const loadAppData = async () => {
@@ -110,7 +190,11 @@ const App: React.FC = () => {
     
     try {
       const email = username.includes('@') ? username : `${username}@editorgmail.com`;
-      const { data, error } = await authService.signIn(email, password);
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
       
       if (error) {
         alert('Login failed: ' + error.message);
@@ -119,22 +203,43 @@ const App: React.FC = () => {
       }
 
       if (data.user) {
-        const { data: userData } = await usersService.getUserByEmail(data.user.email!);
-        if (userData && userData.approved) {
-          setUser({
-            uid: userData.uid,
-            email: userData.email,
-            displayName: userData.display_name,
-            photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-            role: userData.role as 'editor' | 'moderator' | 'owner',
-            approved: userData.approved
-          });
-          setCurrentPage('dashboard');
-          await loadAppData(); // Refresh data
-        } else {
-          alert('Account not approved yet. Please wait for approval.');
-          await authService.signOut();
+        const { data: userData, error: userError } = await usersService.getUserByEmail(data.user.email!);
+        
+        if (userError || !userData) {
+          alert('User profile not found. Please contact administrator.');
+          await supabase.auth.signOut();
+          setLoading(false);
+          return;
         }
+
+        if (!userData.approved) {
+          alert('Account not approved yet. Please wait for approval.');
+          await supabase.auth.signOut();
+          setCurrentPage('approval');
+          setLoading(false);
+          return;
+        }
+
+        // Successful login
+        setUser({
+          uid: userData.uid,
+          email: userData.email,
+          displayName: userData.display_name,
+          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
+          role: userData.role as 'editor' | 'moderator' | 'owner',
+          approved: userData.approved
+        });
+        
+        setCurrentPage('dashboard');
+        await loadAppData(); // Refresh data after login
+        
+        // Add login notification
+        await addNotification({
+          type: 'user',
+          title: 'User Login',
+          message: `${userData.display_name} logged in`,
+          urgent: false
+        });
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -161,19 +266,27 @@ const App: React.FC = () => {
         shouldAutoApprove = true;
       }
 
-      // Create auth user
-      const { data, error } = await authService.signUp(email, password, username);
+      // Create auth user first
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: username,
+          }
+        }
+      });
       
-      if (error) {
-        alert('Account creation failed: ' + error.message);
+      if (authError) {
+        alert('Account creation failed: ' + authError.message);
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        // Create user record in database
-        const { error: userError } = await usersService.createUser({
-          uid: data.user.id,
+      if (authData.user) {
+        // Create user record in database immediately
+        const { data: userData, error: userError } = await usersService.createUser({
+          uid: authData.user.id,
           email: email,
           display_name: username,
           photo_url: `https://i.pravatar.cc/150?u=${email}`,
@@ -183,12 +296,23 @@ const App: React.FC = () => {
 
         if (userError) {
           console.error('Error creating user record:', userError);
+          alert('Error creating user profile. Please try again.');
+          setLoading(false);
+          return;
         }
+
+        // Add welcome notification
+        await addNotification({
+          type: 'user',
+          title: 'Welcome to Idyll Productions!',
+          message: `Account created for ${username}`,
+          urgent: false
+        });
 
         if (shouldAutoApprove) {
           // Auto-login for special roles
           setUser({
-            uid: data.user.id,
+            uid: authData.user.id,
             email: email,
             displayName: username,
             photoURL: `https://i.pravatar.cc/150?u=${email}`,
@@ -198,8 +322,25 @@ const App: React.FC = () => {
           setCurrentPage('dashboard');
           await loadAppData();
         } else {
-          // Regular approval process
+          // Regular approval process - but user is registered in database
           setCurrentPage('approval');
+          
+          // Also create an application record for moderator review
+          await applicationsService.createApplication({
+            name: username,
+            email: email,
+            software: 'Not specified',
+            role: 'Editor',
+            portfolio: 'Not provided',
+            location: 'Not specified'
+          });
+
+          await addNotification({
+            type: 'user',
+            title: 'New User Registration',
+            message: `${username} registered and needs approval`,
+            urgent: true
+          });
         }
       }
     } catch (error) {
@@ -214,20 +355,28 @@ const App: React.FC = () => {
   const approveUser = async (applicationId: number) => {
     try {
       const application = appState.applications.find(app => app.id === applicationId);
-      if (application) {
-        // Update application status
-        await applicationsService.updateApplication(applicationId, { status: 'approved' });
-        
-        // Create user account
-        const { data, error } = await authService.signUp(
-          application.email, 
-          'tempPassword123!', // They'll need to reset this
-          application.name
-        );
+      if (!application) {
+        alert('Application not found');
+        return;
+      }
 
-        if (data.user) {
+      // Check if user already exists in users table
+      const { data: existingUser } = await usersService.getUserByEmail(application.email);
+      
+      if (existingUser) {
+        // User exists, just approve them
+        await usersService.updateUser(existingUser.id, { approved: true });
+      } else {
+        // Create new user (shouldn't happen with new flow, but safety check)
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: application.email,
+          password: 'TempPassword123!', // They'll need to reset
+          email_confirm: true
+        });
+
+        if (authData.user) {
           await usersService.createUser({
-            uid: data.user.id,
+            uid: authData.user.id,
             email: application.email,
             display_name: application.name,
             photo_url: `https://i.pravatar.cc/150?u=${application.email}`,
@@ -235,10 +384,23 @@ const App: React.FC = () => {
             approved: true
           });
         }
-
-        // Refresh data
-        await loadAppData();
       }
+
+      // Update application status
+      await applicationsService.updateApplication(applicationId, { status: 'approved' });
+
+      // Add notification
+      await addNotification({
+        type: 'user',
+        title: 'Editor Approved',
+        message: `${application.name} has been approved as an editor`,
+        urgent: false
+      });
+
+      // Refresh data
+      await loadAppData();
+      
+      alert(`${application.name} has been approved successfully!`);
     } catch (error) {
       console.error('Error approving user:', error);
       alert('Error approving user. Please try again.');
@@ -274,13 +436,26 @@ const App: React.FC = () => {
 
   const updateTask = async (taskId: string, updates: any) => {
     try {
-      const task = appState.tasks.find(t => t.task_number === taskId);
+      // Find task by task_number or id
+      const task = appState.tasks.find(t => t.task_number === taskId || t.id.toString() === taskId);
       if (task) {
         await tasksService.updateTask(task.id, updates);
+        
+        // Add notification for task updates
+        if (updates.status) {
+          await addNotification({
+            type: 'task',
+            title: 'Task Updated',
+            message: `Task "${task.name}" status changed to ${updates.status}`,
+            urgent: false
+          });
+        }
+        
         await loadAppData();
       }
     } catch (error) {
       console.error('Error updating task:', error);
+      alert('Error updating task. Please try again.');
     }
   };
 
@@ -391,9 +566,13 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="h-screen flex flex-col items-center justify-center bg-[#0a0f1c]">
-      <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-      <p className="text-blue-400 font-medium text-sm animate-pulse text-center px-4">Loading Idyll Productions...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center text-slate-100 font-sans selection:bg-blue-500/20 relative">
+      <AnimatedLiquidBackground />
+      <div className="relative z-10 text-center">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+        <p className="text-blue-400 font-medium text-lg animate-pulse">Loading Idyll Productions...</p>
+        <p className="text-slate-400 text-sm mt-2">Connecting to database...</p>
+      </div>
     </div>
   );
 
