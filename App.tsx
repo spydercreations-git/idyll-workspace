@@ -47,12 +47,17 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
+  // Debug: Monitor currentPage and user changes
+  useEffect(() => {
+    console.log('🔄 State change - currentPage:', currentPage, 'user:', user?.email || 'none');
+  }, [currentPage, user]);
+
   // Save current page to localStorage (only for authenticated pages)
   useEffect(() => {
     if (user && (currentPage === 'dashboard' || currentPage === 'management')) {
       localStorage.setItem('currentPage', currentPage);
       console.log('💾 Saved current page:', currentPage);
-    } else if (!user && ['welcome', 'login', 'create-account', 'apply'].includes(currentPage)) {
+    } else if (!user && ['welcome', 'login', 'create-account', 'apply', 'approval'].includes(currentPage)) {
       localStorage.setItem('currentPage', currentPage);
       console.log('💾 Saved current page:', currentPage);
     }
@@ -320,11 +325,14 @@ const App: React.FC = () => {
           setUser(userProfile);
           localStorage.setItem('idyll_user', JSON.stringify(userProfile));
           
-          if (role === 'owner' || role === 'moderator') {
-            setCurrentPage('management');
-          } else {
-            setCurrentPage('dashboard');
-          }
+          // Use setTimeout to ensure state updates are processed
+          setTimeout(() => {
+            if (role === 'owner' || role === 'moderator') {
+              setCurrentPage('management');
+            } else {
+              setCurrentPage('dashboard');
+            }
+          }, 100);
           
           await loadAppData();
           
@@ -359,7 +367,7 @@ const App: React.FC = () => {
 
       console.log('👤 Setting user profile:', userProfile);
 
-      // Set user
+      // Set user first
       setUser(userProfile);
       
       // Save user session to localStorage
@@ -375,7 +383,12 @@ const App: React.FC = () => {
       }
       
       console.log('🎯 Navigating to page:', targetPage);
-      setCurrentPage(targetPage);
+      
+      // Use setTimeout to ensure state updates are processed
+      setTimeout(() => {
+        setCurrentPage(targetPage);
+        console.log('✅ Page set to:', targetPage);
+      }, 100);
       
       console.log('📊 Loading app data...');
       await loadAppData();
@@ -1074,28 +1087,36 @@ const App: React.FC = () => {
       case 'login': return <LoginPage onNavigate={setCurrentPage} onLogin={handleLogin} loading={loading} />;
       case 'apply': return <ApplyPage onNavigate={setCurrentPage} onSubmitApplication={handleApplySubmission} />;
       case 'approval': return <ApprovalPage onNavigate={setCurrentPage} />;
+      case 'management':
+        if (!user) {
+          console.log('⚠️ No user found for management page, redirecting to welcome');
+          setCurrentPage('welcome');
+          return <WelcomePage onNavigate={setCurrentPage} />;
+        }
+        return <ManagementPanel 
+          user={user} 
+          onLogout={handleLogout} 
+          appState={appState}
+          onApproveUser={approveUser}
+          onRejectApplication={rejectApplication}
+          onCreateTask={createTask}
+          onUpdateTask={updateTask}
+          onCreateMeeting={createMeeting}
+          onDeleteMeeting={deleteMeeting}
+          onUpdatePayout={updatePayout}
+          onAddChatMessage={addChatMessage}
+          onEditChatMessage={editChatMessage}
+          onDeleteChatMessage={deleteChatMessage}
+          onAddNotification={addNotification}
+          onRemoveUser={removeUser}
+          onChangeUserRole={changeUserRole}
+          onRefreshData={loadAppData}
+        />;
       case 'dashboard': 
-        if (!user) return <WelcomePage onNavigate={setCurrentPage} />;
-        if (user.role === 'moderator' || user.role === 'owner') {
-          return <ManagementPanel 
-            user={user} 
-            onLogout={handleLogout} 
-            appState={appState}
-            onApproveUser={approveUser}
-            onRejectApplication={rejectApplication}
-            onCreateTask={createTask}
-            onUpdateTask={updateTask}
-            onCreateMeeting={createMeeting}
-            onDeleteMeeting={deleteMeeting}
-            onUpdatePayout={updatePayout}
-            onAddChatMessage={addChatMessage}
-            onEditChatMessage={editChatMessage}
-            onDeleteChatMessage={deleteChatMessage}
-            onAddNotification={addNotification}
-            onRemoveUser={removeUser}
-            onChangeUserRole={changeUserRole}
-            onRefreshData={loadAppData}
-          />;
+        if (!user) {
+          console.log('⚠️ No user found for dashboard page, redirecting to welcome');
+          setCurrentPage('welcome');
+          return <WelcomePage onNavigate={setCurrentPage} />;
         }
         return <EditorDashboard 
           user={user} 
@@ -1114,7 +1135,9 @@ const App: React.FC = () => {
           onDeleteChatMessage={deleteChatMessage}
           onRefreshData={loadAppData}
         />;
-      default: return <WelcomePage onNavigate={setCurrentPage} />;
+      default: 
+        console.log('⚠️ Unknown page:', currentPage, 'redirecting to welcome');
+        return <WelcomePage onNavigate={setCurrentPage} />;
     }
   };
 
