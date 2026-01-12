@@ -59,10 +59,10 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onNavigate }) => {
                   Workspace
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-slate-400 mb-6 max-w-4xl mx-auto leading-relaxed font-light">
+              <p className="text-xl md:text-2xl text-slate-300 mb-6 max-w-4xl mx-auto leading-relaxed font-medium">
                 Streamline your video production workflow with our comprehensive editor management platform.
               </p>
-              <p className="text-lg text-slate-500 max-w-3xl mx-auto font-light">
+              <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto font-medium">
                 Manage tasks, track progress, handle payouts, and collaborate seamlessly with your editing team.
               </p>
             </div>
@@ -71,7 +71,7 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onNavigate }) => {
             <div className="flex flex-col sm:flex-row gap-6 justify-center mb-16 animate-slide-up animate-delay-300">
               <button 
                 onClick={() => onNavigate('login')}
-                className="group px-10 py-5 btn-gradient text-white font-semibold text-lg flex items-center justify-center gap-3 min-w-[280px] rounded-2xl transition-all duration-300 hover:scale-105"
+                className="group px-10 py-5 btn-outline text-white font-semibold text-lg flex items-center justify-center gap-3 min-w-[280px] rounded-2xl transition-all duration-300 hover:scale-105"
               >
                 <LogIn size={22} className="group-hover:rotate-12 transition-transform duration-300" /> 
                 Login to Dashboard
@@ -83,15 +83,11 @@ const WelcomePage: React.FC<WelcomePageProps> = ({ onNavigate }) => {
                 <UserPlus size={22} className="group-hover:scale-110 transition-transform duration-300" /> 
                 Create New Account
               </button>
-            </div>
-
-            {/* Secondary Action */}
-            <div className="animate-slide-up animate-delay-500">
               <button 
                 onClick={() => onNavigate('apply')}
-                className="group px-10 py-5 surface-card text-white font-semibold text-lg flex items-center justify-center gap-3 min-w-[280px] rounded-2xl transition-all duration-300 hover:scale-105 border border-slate-600/50 hover:border-blue-500/30"
+                className="group px-10 py-5 btn-outline text-white font-semibold text-lg flex items-center justify-center gap-3 min-w-[280px] rounded-2xl transition-all duration-300 hover:scale-105"
               >
-                <UserPlus size={22} className="text-purple-400 group-hover:rotate-180 transition-transform duration-500" />
+                <UserPlus size={22} className="group-hover:scale-110 transition-transform duration-300" />
                 Apply to be an Editor
               </button>
             </div>
