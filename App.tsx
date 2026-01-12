@@ -10,16 +10,8 @@ import ManagementPanel from './components/ManagementPanel';
 import CustomCursor from './components/CustomCursor';
 import AnimatedLiquidBackground from './components/AnimatedLiquidBackground';
 import { UserProfile } from './types';
-import { 
-  authService, 
-  usersService, 
-  applicationsService, 
-  tasksService, 
-  meetingsService, 
-  payoutsService, 
-  chatService, 
-  notificationsService 
-} from './services/database';
+import { authService, usersService, chatService } from './services/database';
+import { notionDatabase } from './services/notionDatabase';
 import { supabase } from './lib/supabase';
 
 // Global state for demo purposes
@@ -64,6 +56,8 @@ const App: React.FC = () => {
       await loadAppData();
       // Set up real-time subscriptions
       setupRealtimeSubscriptions();
+      // Set up Notion sync
+      setupNotionSync();
     } catch (error) {
       console.error('Error initializing app:', error);
     }
@@ -84,9 +78,14 @@ const App: React.FC = () => {
             role: userData.role as 'editor' | 'moderator' | 'owner',
             approved: userData.approved
           });
-          setCurrentPage('dashboard');
+          // Don't change page if user is already on a valid page
+          if (currentPage === 'welcome' || currentPage === 'login' || currentPage === 'create-account') {
+            setCurrentPage('dashboard');
+          }
         } else if (userData && !userData.approved) {
-          setCurrentPage('approval');
+          if (currentPage !== 'approval') {
+            setCurrentPage('approval');
+          }
         }
       }
     } catch (error) {
@@ -94,63 +93,39 @@ const App: React.FC = () => {
     }
   };
 
+  const setupNotionSync = () => {
+    console.log('🔄 Setting up Notion polling...');
+    
+    // Start polling Notion for changes every 2 seconds
+    notionDatabase.startPolling((type: string, data: any) => {
+      console.log(`🔄 Notion change detected: ${type}`, data);
+      // Refresh app data when Notion changes are detected
+      loadAppData();
+    });
+  };
+
   const setupRealtimeSubscriptions = () => {
     console.log('Setting up real-time subscriptions...');
     
-    // Subscribe to all table changes for real-time updates
+    // Subscribe to Supabase tables only (users + chat_messages)
     const subscription = supabase
-      .channel('all-changes')
+      .channel('supabase-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'chat_messages' },
         (payload) => {
-          console.log('Chat message change:', payload);
-          loadAppData(); // Refresh all data
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'notifications' },
-        (payload) => {
-          console.log('Notification change:', payload);
-          loadAppData(); // Refresh all data
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'applications' },
-        (payload) => {
-          console.log('Application change:', payload);
-          loadAppData(); // Refresh all data
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'tasks' },
-        (payload) => {
-          console.log('Task change:', payload);
-          loadAppData(); // Refresh all data
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'meetings' },
-        (payload) => {
-          console.log('Meeting change:', payload);
-          loadAppData(); // Refresh all data
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'payouts' },
-        (payload) => {
-          console.log('Payout change:', payload);
+          console.log('💬 Chat message change:', payload);
           loadAppData(); // Refresh all data
         }
       )
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'users' },
         (payload) => {
-          console.log('User change:', payload);
+          console.log('👤 User change:', payload);
           loadAppData(); // Refresh all data
         }
       )
       .subscribe((status) => {
-        console.log('Subscription status:', status);
+        console.log('Supabase subscription status:', status);
       });
 
     return () => {
@@ -164,11 +139,11 @@ const App: React.FC = () => {
       console.log('Loading app data...');
       const [users, tasks, applications, meetings, payouts, notifications, chatMessages] = await Promise.all([
         usersService.getUsers(),
-        tasksService.getTasks(),
-        applicationsService.getApplications(),
-        meetingsService.getMeetings(),
-        payoutsService.getPayouts(),
-        notificationsService.getNotifications(),
+        notionDatabase.getTasks(),
+        notionDatabase.getApplications(),
+        notionDatabase.getMeetings(),
+        notionDatabase.getPayouts(),
+        notionDatabase.getNotifications(),
         chatService.getMessages()
       ]);
 
@@ -448,7 +423,7 @@ const App: React.FC = () => {
       setCurrentPage('login');
       
       // Create an application record for moderator review
-      await applicationsService.createApplication({
+      await notionDatabase.createApplication({
         name: username,
         email: emailLower,
         software: 'Not specified',
@@ -510,7 +485,7 @@ const App: React.FC = () => {
 
       // Update application status
       console.log('Updating application status...');
-      const { error: appError } = await applicationsService.updateApplication(applicationId, { status: 'approved' });
+      const { error: appError } = await notionDatabase.updateApplication(applicationId, { status: 'approved' });
       if (appError) {
         throw appError;
       }
@@ -538,7 +513,7 @@ const App: React.FC = () => {
       console.log('Rejecting application ID:', applicationId);
       const application = appState.applications.find(app => app.id === applicationId);
       
-      await applicationsService.updateApplication(applicationId, { status: 'rejected' });
+      await notionDatabase.updateApplication(applicationId, { status: 'rejected' });
       
       // Add notification
       if (application) {
@@ -570,7 +545,7 @@ const App: React.FC = () => {
         raw_file: taskData.rawFile || null
       };
       
-      const { data, error } = await tasksService.createTask(newTask);
+      const { data, error } = await notionDatabase.createTask(newTask);
       if (error) {
         throw error;
       }
@@ -584,7 +559,7 @@ const App: React.FC = () => {
       });
       
       await loadAppData();
-      alert('Task created successfully!');
+      alert('Task created successfully and synced to Notion!');
     } catch (error) {
       console.error('Error creating task:', error);
       alert('Error creating task: ' + error.message);
@@ -597,7 +572,7 @@ const App: React.FC = () => {
       // Find task by task_number or id
       const task = appState.tasks.find(t => t.task_number === taskId || t.id.toString() === taskId);
       if (task) {
-        const { data, error } = await tasksService.updateTask(task.id, updates);
+        const { data, error } = await notionDatabase.updateTask(task.id, updates);
         if (error) {
           throw error;
         }
@@ -631,10 +606,11 @@ const App: React.FC = () => {
         date: meetingData.date,
         time: meetingData.time,
         attendees: meetingData.attendees,
-        organizer: user?.displayName || 'System'
+        organizer: user?.displayName || 'System',
+        link: meetingData.link || null
       };
       
-      const { data, error } = await meetingsService.createMeeting(newMeeting);
+      const { data, error } = await notionDatabase.createMeeting(newMeeting);
       if (error) {
         throw error;
       }
@@ -648,7 +624,7 @@ const App: React.FC = () => {
       });
       
       await loadAppData();
-      alert('Meeting scheduled successfully!');
+      alert('Meeting scheduled successfully and synced to Notion!');
     } catch (error) {
       console.error('Error creating meeting:', error);
       alert('Error creating meeting: ' + error.message);
@@ -658,7 +634,7 @@ const App: React.FC = () => {
   const deleteMeeting = async (meetingId: number) => {
     try {
       console.log('Deleting meeting:', meetingId);
-      const { error } = await meetingsService.deleteMeeting(meetingId);
+      const { error } = await notionDatabase.deleteMeeting(meetingId);
       if (error) {
         throw error;
       }
@@ -676,13 +652,14 @@ const App: React.FC = () => {
       console.log('Creating payout:', payoutData);
       const newPayout = {
         editor: payoutData.editor,
+        editor_email: user?.email || payoutData.editor_email,
         project: payoutData.project,
         amount: payoutData.amount,
         edited_link: payoutData.editedLink,
         payment_method: payoutData.paymentMethod
       };
       
-      const { data, error } = await payoutsService.createPayout(newPayout);
+      const { data, error } = await notionDatabase.createPayout(newPayout);
       if (error) {
         throw error;
       }
@@ -706,7 +683,7 @@ const App: React.FC = () => {
   const updatePayout = async (payoutId: number, updates: any) => {
     try {
       console.log('Updating payout:', payoutId, updates);
-      const { data, error } = await payoutsService.updatePayout(payoutId, updates);
+      const { data, error } = await notionDatabase.updatePayout(payoutId, updates);
       if (error) {
         throw error;
       }
@@ -756,7 +733,7 @@ const App: React.FC = () => {
   const addNotification = async (notification: any) => {
     try {
       console.log('Adding notification:', notification);
-      const { data, error } = await notificationsService.createNotification({
+      const { data, error } = await notionDatabase.createNotification({
         type: notification.type,
         title: notification.title,
         message: notification.message,
@@ -778,7 +755,7 @@ const App: React.FC = () => {
 
   const handleApplySubmission = async (applicationData: any) => {
     try {
-      await applicationsService.createApplication({
+      await notionDatabase.createApplication({
         name: applicationData.name,
         email: applicationData.email,
         contact: applicationData.contact,
@@ -841,12 +818,12 @@ const App: React.FC = () => {
         return <EditorDashboard 
           user={user} 
           onLogout={handleLogout} 
-          tasks={appState.tasks.filter(task => task.assigned_to === user.displayName)}
+          tasks={appState.tasks.filter(task => task.assigned_to === user.email)}
           meetings={appState.meetings.filter(meeting => 
-            (Array.isArray(meeting.attendees) ? meeting.attendees : [meeting.attendees]).includes(user.displayName) || 
+            (Array.isArray(meeting.attendees_emails) ? meeting.attendees_emails : [meeting.attendees_emails]).includes(user.email) || 
             (Array.isArray(meeting.attendees) ? meeting.attendees : [meeting.attendees]).includes('All Team')
           )}
-          payouts={appState.payouts.filter(payout => payout.editor === user.displayName)}
+          payouts={appState.payouts.filter(payout => payout.editor_email === user.email)}
           chatMessages={appState.chatMessages}
           onUpdateTask={updateTask}
           onCreatePayout={createPayout}

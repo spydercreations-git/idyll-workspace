@@ -1,107 +1,141 @@
 -- Idyll Productions Database Schema
--- PostgreSQL Database Setup
+-- Notion-First Architecture: Minimal Supabase + Primary Notion
 
--- Users table
-CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
-    uid VARCHAR(255) UNIQUE NOT NULL,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    display_name VARCHAR(255) NOT NULL,
-    photo_url TEXT,
-    role VARCHAR(50) DEFAULT 'editor' CHECK (role IN ('editor', 'moderator', 'owner')),
-    approved BOOLEAN DEFAULT false,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- =============================================
+-- SUPABASE TABLES (Essential Data Only)
+-- =============================================
+
+-- Users table (Authentication + Core User Data)
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  uid TEXT UNIQUE NOT NULL,
+  email TEXT UNIQUE NOT NULL,
+  display_name TEXT NOT NULL,
+  photo_url TEXT,
+  role TEXT NOT NULL DEFAULT 'editor' CHECK (role IN ('editor', 'moderator', 'owner')),
+  approved BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Applications table (for editor applications)
-CREATE TABLE applications (
-    id SERIAL PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    contact VARCHAR(255),
-    location VARCHAR(255),
-    software VARCHAR(255),
-    role VARCHAR(255),
-    portfolio TEXT,
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
-    applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Chat Messages table (Real-time WebSocket functionality)
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id SERIAL PRIMARY KEY,
+  sender TEXT NOT NULL,
+  message TEXT NOT NULL,
+  type TEXT DEFAULT 'user' CHECK (type IN ('user', 'system')),
+  timestamp TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Tasks table
-CREATE TABLE tasks (
-    id SERIAL PRIMARY KEY,
-    task_number VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    assigned_to VARCHAR(255) NOT NULL,
-    deadline DATE NOT NULL,
-    priority VARCHAR(50) DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high')),
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'in-progress', 'completed')),
-    raw_file TEXT,
-    edited_file TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- =============================================
+-- NOTION DATABASES (Primary Data Storage)
+-- =============================================
 
--- Meetings table
-CREATE TABLE meetings (
-    id SERIAL PRIMARY KEY,
-    title VARCHAR(255) NOT NULL,
-    date DATE NOT NULL,
-    time TIME NOT NULL,
-    attendees TEXT[], -- PostgreSQL array for attendees
-    organizer VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- All other data is stored in Notion:
+-- 1. Tasks Database (ID: 2cc28c5fb67380b6b9eadeea94981afb)
+--    - Task Number (Number)
+--    - Name (Text)
+--    - Assigned To (Email) <- Email-based filtering
+--    - Status (Select): Pending, In Progress, Completed
+--    - Priority (Select): Low, Medium, High
+--    - Deadline (Date)
+--    - Raw File (URL)
+--    - Edited File (URL)
+--    - Idyll Approval (Select): Reviewing, Need Changes, Approved
 
--- Payouts table
-CREATE TABLE payouts (
-    id SERIAL PRIMARY KEY,
-    editor VARCHAR(255) NOT NULL,
-    project VARCHAR(255) NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    edited_link TEXT NOT NULL,
-    payment_method VARCHAR(255) NOT NULL,
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'paid', 'rejected')),
-    requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+-- 2. Meetings Database (ID: 2e628c5fb67380e58d64eef87105515d)
+--    - Title (Text)
+--    - Date (Date)
+--    - Time (Text)
+--    - Attendees Emails (Multi-select) <- Email-based filtering
+--    - Attendees Names (Multi-select)
+--    - Organizer (Text)
+--    - Link (URL)
 
--- Chat messages table
-CREATE TABLE chat_messages (
-    id SERIAL PRIMARY KEY,
-    sender VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    type VARCHAR(50) DEFAULT 'user' CHECK (type IN ('user', 'system'))
-);
+-- 3. Payouts Database (ID: 2e628c5fb67380568bd2ef6a1eb05965)
+--    - Project (Text)
+--    - Editor Email (Email) <- Email-based filtering
+--    - Editor Name (Text)
+--    - Amount (Number)
+--    - Status (Select): Pending, Approved, Paid, Rejected
+--    - Edited Link (URL)
+--    - Payment Method (Text)
+--    - Requested Date (Date)
 
--- Notifications table
-CREATE TABLE notifications (
-    id SERIAL PRIMARY KEY,
-    type VARCHAR(50) NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    message TEXT NOT NULL,
-    urgent BOOLEAN DEFAULT false,
-    time VARCHAR(50) DEFAULT 'Just now',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    read_at TIMESTAMP NULL
-);
+-- 4. Applications Database (ID: 2e628c5fb6738005950fdadb6dcd2ba3)
+--    - Name (Text)
+--    - Email (Email)
+--    - Status (Select): Pending, Approved, Rejected
+--    - Software (Text)
+--    - Role (Text)
+--    - Portfolio (URL)
+--    - Location (Text)
+--    - Contact (Text)
+--    - Applied Date (Date)
 
--- Indexes for better performance
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_role ON users(role);
-CREATE INDEX idx_tasks_assigned_to ON tasks(assigned_to);
-CREATE INDEX idx_tasks_status ON tasks(status);
-CREATE INDEX idx_chat_messages_timestamp ON chat_messages(timestamp);
-CREATE INDEX idx_notifications_created_at ON notifications(created_at);
+-- 5. Notifications Database (ID: 2e628c5fb673807fbf92f7fbd55fa913)
+--    - Title (Text)
+--    - Message (Text)
+--    - Type (Select): task, meeting, payout, user, info
+--    - Urgent (Checkbox)
+--    - Time (Text)
 
--- Insert default admin user (update with your actual email)
-INSERT INTO users (uid, email, display_name, role, approved) 
-VALUES ('admin-001', 'idyllproductionsofficial@gmail.com', 'Idyll Productions', 'owner', true);
+-- =============================================
+-- REAL-TIME FUNCTIONALITY
+-- =============================================
 
-INSERT INTO users (uid, email, display_name, role, approved) 
-VALUES ('mod-001', 'harshpawar7711@gmail.com', 'Harsh Pawar', 'moderator', true);
+-- Supabase: Real-time WebSocket subscriptions for chat_messages and users
+-- Notion: Polling every 2 seconds for tasks, meetings, payouts, applications, notifications
 
-INSERT INTO users (uid, email, display_name, role, approved) 
-VALUES ('mod-002', 'rohitidyllproductions@gmail.com', 'Rohit', 'moderator', true);
+-- =============================================
+-- EMAIL-BASED FILTERING
+-- =============================================
+
+-- All Notion databases use email-based filtering:
+-- - Tasks filtered by "Assigned To" email
+-- - Meetings filtered by "Attendees Emails" multi-select
+-- - Payouts filtered by "Editor Email"
+-- - Applications filtered by "Email"
+-- - Notifications are global (no filtering needed)
+
+-- =============================================
+-- ROLE ASSIGNMENTS
+-- =============================================
+
+-- Email-based role assignments:
+-- idyllproductionsofficial@gmail.com → Owner
+-- harshpawar7711@gmail.com → Moderator  
+-- rohitidyllproductions@gmail.com → Moderator
+-- All others → Editor (requires approval)
+
+-- Enable Row Level Security
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Create policies for users table
+CREATE POLICY "Users can view all users" ON users FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own data" ON users FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can update their own data" ON users FOR UPDATE USING (true);
+
+-- Create policies for chat_messages table  
+CREATE POLICY "Anyone can view chat messages" ON chat_messages FOR SELECT USING (true);
+CREATE POLICY "Anyone can insert chat messages" ON chat_messages FOR INSERT WITH CHECK (true);
+
+-- Create indexes for performance
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+CREATE INDEX IF NOT EXISTS idx_users_approved ON users(approved);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_timestamp ON chat_messages(timestamp);
+
+-- Update timestamp function
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = NOW();
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create trigger for users table
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

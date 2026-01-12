@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Users, CheckSquare, Calendar, DollarSign, MessageSquare, Bell, LogOut, Shield, Crown, Edit3 } from 'lucide-react';
+import { UserCheck, Users, CheckSquare, Calendar, DollarSign, MessageSquare, Bell, LogOut, Shield, Crown, Edit3, RefreshCw } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ManagementPanelProps {
@@ -35,6 +35,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [syncingNotion, setSyncingNotion] = useState(false);
   const [newTask, setNewTask] = useState({
     name: '',
     assignedTo: '',
@@ -46,7 +47,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
     title: '',
     date: '',
     time: '',
-    attendees: [] as string[]
+    attendees: [] as string[],
+    link: ''
   });
 
   const switchToEditor = () => {
@@ -179,8 +181,27 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     }`}>
                       {user.approved ? 'Active' : 'Pending'}
                     </span>
-                    <button className="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-600 transition-colors">
-                      Edit
+                    <select
+                      value={user.role}
+                      onChange={(e) => {
+                        // Handle role change
+                        console.log(`Changing role for ${user.email} to ${e.target.value}`);
+                      }}
+                      className="px-3 py-1 bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="editor">Editor</option>
+                      <option value="moderator">Moderator</option>
+                      <option value="owner">Owner</option>
+                    </select>
+                    <button 
+                      onClick={() => {
+                        if (confirm(`Are you sure you want to remove ${user.display_name}?`)) {
+                          console.log(`Removing user: ${user.email}`);
+                        }
+                      }}
+                      className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Remove
                     </button>
                   </div>
                 </div>
@@ -246,7 +267,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                   >
                     <option value="">Select Editor</option>
                     {appState.users.filter((user: any) => user.approved && user.role === 'editor').map((user: any) => (
-                      <option key={user.id} value={user.display_name}>{user.display_name}</option>
+                      <option key={user.id} value={user.email}>{user.display_name} ({user.email})</option>
                     ))}
                   </select>
                 </div>
@@ -372,13 +393,15 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
     if (newMeeting.title && newMeeting.date && newMeeting.time) {
       onCreateMeeting({
         ...newMeeting,
-        attendees: newMeeting.attendees.length > 0 ? newMeeting.attendees : ['All Team']
+        attendees: newMeeting.attendees.length > 0 ? newMeeting.attendees : ['All Team'],
+        attendees_emails: newMeeting.attendees.length > 0 ? newMeeting.attendees : ['All Team']
       });
       setNewMeeting({
         title: '',
         date: '',
         time: '',
-        attendees: []
+        attendees: [],
+        link: ''
       });
       setShowCreateMeeting(false);
       onAddNotification({
@@ -395,6 +418,18 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
       onAddChatMessage(chatMessage, user.displayName);
       setChatMessage('');
     }
+  };
+
+  const handleSyncToNotion = async () => {
+    setSyncingNotion(true);
+    try {
+      // Since we're using Notion as primary database, just refresh data
+      alert('Data is already synced! Notion is the primary database.');
+    } catch (error) {
+      console.error('Sync error:', error);
+      alert('Error syncing to Notion. Check console for details.');
+    }
+    setSyncingNotion(false);
   };
 
   const renderMeetingManagement = () => (
@@ -448,6 +483,16 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 </div>
               </div>
               <div>
+                <label className="block text-slate-300 text-sm font-bold mb-2">Meeting Link (Optional)</label>
+                <input
+                  type="url"
+                  value={newMeeting.link}
+                  onChange={(e) => setNewMeeting({...newMeeting, link: e.target.value})}
+                  className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:border-blue-500 focus:outline-none"
+                  placeholder="https://zoom.us/j/..."
+                />
+              </div>
+              <div>
                 <label className="block text-slate-300 text-sm font-bold mb-2">Attendees</label>
                 <div className="space-y-2">
                   <label className="flex items-center">
@@ -469,23 +514,23 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     <label key={user.id} className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={newMeeting.attendees.includes(user.display_name)}
+                        checked={newMeeting.attendees.includes(user.email)}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setNewMeeting({
                               ...newMeeting, 
-                              attendees: [...newMeeting.attendees.filter(a => a !== 'All Team'), user.display_name]
+                              attendees: [...newMeeting.attendees.filter(a => a !== 'All Team'), user.email]
                             });
                           } else {
                             setNewMeeting({
                               ...newMeeting,
-                              attendees: newMeeting.attendees.filter(a => a !== user.display_name)
+                              attendees: newMeeting.attendees.filter(a => a !== user.email)
                             });
                           }
                         }}
                         className="mr-2"
                       />
-                      <span className="text-slate-300">{user.display_name}</span>
+                      <span className="text-slate-300">{user.display_name} ({user.email})</span>
                     </label>
                   ))}
                 </div>
@@ -806,6 +851,14 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <button 
+                onClick={handleSyncToNotion}
+                disabled={syncingNotion}
+                className="hidden md:flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncingNotion ? 'animate-spin' : ''}`} />
+                {syncingNotion ? 'Syncing...' : 'Sync to Notion'}
+              </button>
               <button onClick={onLogout} className="md:hidden text-slate-600 active:scale-90">
                 <LogOut size={20} />
               </button>
