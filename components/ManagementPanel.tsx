@@ -484,9 +484,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">📋 Live from Notion</span>
-              </div>
             </div>
           </div>
         </div>
@@ -863,9 +860,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">📅 Live from Notion</span>
-              </div>
             </div>
           </div>
         </div>
@@ -927,9 +921,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">💰 Live from Notion</span>
-              </div>
             </div>
           </div>
           <p className="text-slate-500 text-xs mt-2 text-center">

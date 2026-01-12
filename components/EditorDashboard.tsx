@@ -293,9 +293,6 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">📋 Live from Notion</span>
-              </div>
             </div>
           </div>
         </div>
@@ -454,9 +451,6 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">📅 Live from Notion</span>
-              </div>
             </div>
           </div>
         </div>
@@ -712,9 +706,6 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 allowFullScreen
                 loading="lazy"
               />
-              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="text-xs text-slate-300">💰 Live from Notion</span>
-              </div>
             </div>
           </div>
         </div>
