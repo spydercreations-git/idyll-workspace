@@ -853,7 +853,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white pb-20 md:pb-0">
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white pb-20 md:pb-0">
       {/* Sidebar */}
       <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 sidebar flex-col py-6 z-50">
         <div className="flex items-center gap-3 px-6 mb-8">
@@ -886,12 +886,12 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           ))}
         </div>
 
-        <div className="px-6 pt-4 border-t border-gray-700">
+        <div className="px-6 pt-4 border-t border-white border-opacity-20">
           <div className="flex items-center gap-3 mb-4">
             <img src={user.photoURL} alt="profile" className="w-8 h-8 rounded-full" />
             <div>
               <div className="font-medium text-sm">{user.displayName}</div>
-              <div className="text-xs text-gray-400 capitalize">{user.role}</div>
+              <div className="text-xs text-white text-opacity-60 capitalize">{user.role}</div>
             </div>
           </div>
           <button onClick={onLogout} className="w-full btn-secondary text-left flex items-center gap-2">
@@ -902,7 +902,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
       </nav>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-gray-800 border-t border-gray-700 flex items-center justify-around px-4 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-black bg-opacity-40 backdrop-blur-lg border-t border-white border-opacity-20 flex items-center justify-around px-4 z-50">
         {[
           { id: 'tasks', icon: CheckSquare },
           { id: 'users', icon: Users },
