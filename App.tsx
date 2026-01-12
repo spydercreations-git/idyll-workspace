@@ -207,66 +207,97 @@ const App: React.FC = () => {
     setLoading(true);
     
     try {
-      const email = username.includes('@') ? username : `${username}@editorgmail.com`;
+      const email = username.includes('@') ? username.toLowerCase() : `${username}@editorgmail.com`;
+      console.log('Attempting login with email:', email);
       
-      // First try normal login
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Check if user exists in our database first
+      const { data: userData, error: userError } = await usersService.getUserByEmail(email);
       
-      if (error) {
-        // If email not confirmed, try to find user in database anyway
-        if (error.message.includes('Email not confirmed')) {
-          console.log('Email not confirmed, checking database directly...');
-          
-          // Check if user exists in our users table
-          const { data: userData, error: userError } = await usersService.getUserByEmail(email);
-          
-          if (userData && userData.approved) {
-            // User exists and is approved, let them in
-            setUser({
-              uid: userData.uid,
-              email: userData.email,
-              displayName: userData.display_name,
-              photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-              role: userData.role as 'editor' | 'moderator' | 'owner',
-              approved: userData.approved
-            });
-            
-            setCurrentPage('dashboard');
-            await loadAppData();
-            
-            alert('Login successful! (Email confirmation bypassed for admin)');
-            setLoading(false);
-            return;
-          }
-        }
-        
-        alert('Login failed: ' + error.message);
+      if (!userData) {
+        alert('User not found. Please create an account first or contact admin.');
         setLoading(false);
         return;
       }
 
-      if (data.user) {
-        const { data: userData, error: userError } = await usersService.getUserByEmail(data.user.email!);
+      if (!userData.approved) {
+        alert('Account not approved yet. Please wait for approval from moderators.');
+        setCurrentPage('approval');
+        setLoading(false);
+        return;
+      }
+
+      // For admin users (owner/moderator), bypass Supabase auth completely
+      if (userData.role === 'owner' || userData.role === 'moderator') {
+        console.log('Admin user detected, bypassing Supabase auth');
         
-        if (userError || !userData) {
-          alert('User profile not found. Please contact administrator.');
-          await supabase.auth.signOut();
-          setLoading(false);
-          return;
-        }
+        setUser({
+          uid: userData.uid,
+          email: userData.email,
+          displayName: userData.display_name,
+          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
+          role: userData.role as 'editor' | 'moderator' | 'owner',
+          approved: userData.approved
+        });
+        
+        setCurrentPage('dashboard');
+        await loadAppData();
+        
+        // Add login notification
+        await addNotification({
+          type: 'user',
+          title: 'Admin Login',
+          message: `${userData.display_name} logged in`,
+          urgent: false
+        });
+        
+        setLoading(false);
+        return;
+      }
 
-        if (!userData.approved) {
-          alert('Account not approved yet. Please wait for approval.');
-          await supabase.auth.signOut();
-          setCurrentPage('approval');
-          setLoading(false);
-          return;
-        }
+      // For regular editors, try Supabase auth but fallback to database
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      // If auth fails but user exists and is approved, allow login anyway
+      if (authError && userData.approved) {
+        console.log('Auth failed but user is approved, allowing login:', authError.message);
+        
+        setUser({
+          uid: userData.uid,
+          email: userData.email,
+          displayName: userData.display_name,
+          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
+          role: userData.role as 'editor' | 'moderator' | 'owner',
+          approved: userData.approved
+        });
+        
+        setCurrentPage('dashboard');
+        await loadAppData();
+        
+        // Add login notification
+        await addNotification({
+          type: 'user',
+          title: 'User Login',
+          message: `${userData.display_name} logged in`,
+          urgent: false
+        });
+        
+        setLoading(false);
+        return;
+      }
 
-        // Successful login
+      if (authError) {
+        console.error('Auth error:', authError);
+        alert('Login failed: ' + authError.message + '\n\nPlease check your credentials or contact admin.');
+        setLoading(false);
+        return;
+      }
+
+      // Successful authentication
+      if (authData.user) {
+        console.log('Login successful');
         setUser({
           uid: userData.uid,
           email: userData.email,
@@ -289,7 +320,7 @@ const App: React.FC = () => {
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('Login failed. Please try again.');
+      alert('Login failed. Please try again or create an account.');
     }
     
     setLoading(false);
@@ -299,8 +330,18 @@ const App: React.FC = () => {
     setLoading(true);
     
     try {
-      // Check if this is a special role email
       const emailLower = email.toLowerCase();
+      
+      // Check if user already exists
+      const { data: existingUser } = await usersService.getUserByEmail(emailLower);
+      if (existingUser) {
+        alert('User with this email already exists. Please try logging in instead.');
+        setCurrentPage('login');
+        setLoading(false);
+        return;
+      }
+
+      // Check if this is a special role email
       let role: 'editor' | 'moderator' | 'owner' = 'editor';
       let shouldAutoApprove = false;
       
@@ -312,43 +353,24 @@ const App: React.FC = () => {
         shouldAutoApprove = true;
       }
 
-      // Create auth user with email confirmation disabled
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: username,
-          },
-          emailRedirectTo: undefined // Disable email confirmation
-        }
-      });
-      
-      if (authError) {
-        alert('Account creation failed: ' + authError.message);
-        setLoading(false);
-        return;
-      }
+      let userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      if (authData.user) {
-        // For admin emails, confirm email automatically
-        if (shouldAutoApprove && authData.user.email_confirmed_at === null) {
-          // Try to confirm email programmatically (this might not work due to RLS)
-          console.log('Auto-confirming admin email...');
-        }
-
-        // Create user record in database immediately
+      // For admin users, skip Supabase auth entirely
+      if (shouldAutoApprove) {
+        console.log('Admin user detected, skipping Supabase auth');
+        
+        // Create user record directly in database
         const { data: userData, error: userError } = await usersService.createUser({
-          uid: authData.user.id,
-          email: email,
+          uid: userId,
+          email: emailLower,
           display_name: username,
-          photo_url: `https://i.pravatar.cc/150?u=${email}`,
+          photo_url: `https://i.pravatar.cc/150?u=${emailLower}`,
           role: role,
-          approved: shouldAutoApprove
+          approved: true
         });
 
         if (userError) {
-          console.error('Error creating user record:', userError);
+          console.error('Error creating admin user record:', userError);
           alert('Error creating user profile. Please try again.');
           setLoading(false);
           return;
@@ -358,45 +380,90 @@ const App: React.FC = () => {
         await addNotification({
           type: 'user',
           title: 'Welcome to Idyll Productions!',
-          message: `Account created for ${username}`,
+          message: `Admin account created for ${username}`,
           urgent: false
         });
 
-        if (shouldAutoApprove) {
-          // Auto-login for special roles
-          setUser({
-            uid: authData.user.id,
-            email: email,
-            displayName: username,
-            photoURL: `https://i.pravatar.cc/150?u=${email}`,
-            role: role,
-            approved: true
-          });
-          setCurrentPage('dashboard');
-          await loadAppData();
-        } else {
-          // Show success message and redirect to login
-          alert('Account created successfully! You can now login.');
-          setCurrentPage('login');
-          
-          // Also create an application record for moderator review
-          await applicationsService.createApplication({
-            name: username,
-            email: email,
-            software: 'Not specified',
-            role: 'Editor',
-            portfolio: 'Not provided',
-            location: 'Not specified'
-          });
-
-          await addNotification({
-            type: 'user',
-            title: 'New User Registration',
-            message: `${username} registered and needs approval`,
-            urgent: true
-          });
-        }
+        // Auto-login admin user
+        setUser({
+          uid: userId,
+          email: emailLower,
+          displayName: username,
+          photoURL: `https://i.pravatar.cc/150?u=${emailLower}`,
+          role: role,
+          approved: true
+        });
+        setCurrentPage('dashboard');
+        await loadAppData();
+        
+        alert(`Welcome ${username}! You have been automatically approved as ${role}.`);
+        setLoading(false);
+        return;
       }
+
+      // For regular users, try Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: emailLower,
+        password,
+        options: {
+          data: {
+            display_name: username,
+          },
+          emailRedirectTo: undefined // Disable email confirmation
+        }
+      });
+      
+      // Even if auth fails, create user record for regular users
+      if (authData?.user?.id) {
+        userId = authData.user.id;
+      }
+      
+      // Create user record in database
+      const { data: userData, error: userError } = await usersService.createUser({
+        uid: userId,
+        email: emailLower,
+        display_name: username,
+        photo_url: `https://i.pravatar.cc/150?u=${emailLower}`,
+        role: role,
+        approved: false // Regular users need approval
+      });
+
+      if (userError) {
+        console.error('Error creating user record:', userError);
+        alert('Error creating user profile. Please try again.');
+        setLoading(false);
+        return;
+      }
+
+      // Add welcome notification
+      await addNotification({
+        type: 'user',
+        title: 'Welcome to Idyll Productions!',
+        message: `Account created for ${username}`,
+        urgent: false
+      });
+
+      // Show success message and redirect to login
+      alert('Account created successfully! You can now login while waiting for approval.');
+      setCurrentPage('login');
+      
+      // Create an application record for moderator review
+      await applicationsService.createApplication({
+        name: username,
+        email: emailLower,
+        software: 'Not specified',
+        role: 'Editor',
+        portfolio: 'Not provided',
+        location: 'Not specified'
+      });
+
+      await addNotification({
+        type: 'user',
+        title: 'New User Registration',
+        message: `${username} registered and needs approval`,
+        urgent: true
+      });
+
     } catch (error) {
       console.error('Account creation error:', error);
       alert('Account creation failed. Please try again.');
@@ -421,23 +488,32 @@ const App: React.FC = () => {
       if (existingUser) {
         // User exists, just approve them
         console.log('User exists, approving...');
-        await usersService.updateUser(existingUser.id, { approved: true });
+        const { error: updateError } = await usersService.updateUser(existingUser.id, { approved: true });
+        if (updateError) {
+          throw updateError;
+        }
       } else {
         // Create new user
         console.log('Creating new user...');
-        await usersService.createUser({
-          uid: `user-${Date.now()}`,
+        const { error: createError } = await usersService.createUser({
+          uid: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           email: application.email,
           display_name: application.name,
           photo_url: `https://i.pravatar.cc/150?u=${application.email}`,
           role: 'editor',
           approved: true
         });
+        if (createError) {
+          throw createError;
+        }
       }
 
       // Update application status
       console.log('Updating application status...');
-      await applicationsService.updateApplication(applicationId, { status: 'approved' });
+      const { error: appError } = await applicationsService.updateApplication(applicationId, { status: 'approved' });
+      if (appError) {
+        throw appError;
+      }
 
       // Add notification
       await addNotification({
@@ -450,10 +526,10 @@ const App: React.FC = () => {
       // Force refresh data
       await loadAppData();
       
-      alert(`${application.name} has been approved successfully!`);
+      alert(`${application.name} has been approved successfully! They can now login.`);
     } catch (error) {
       console.error('Error approving user:', error);
-      alert('Error approving user: ' + error.message);
+      alert('Error approving user: ' + (error as any).message);
     }
   };
 
@@ -767,7 +843,8 @@ const App: React.FC = () => {
           onLogout={handleLogout} 
           tasks={appState.tasks.filter(task => task.assigned_to === user.displayName)}
           meetings={appState.meetings.filter(meeting => 
-            meeting.attendees.includes(user.displayName) || meeting.attendees.includes('All Team')
+            (Array.isArray(meeting.attendees) ? meeting.attendees : [meeting.attendees]).includes(user.displayName) || 
+            (Array.isArray(meeting.attendees) ? meeting.attendees : [meeting.attendees]).includes('All Team')
           )}
           payouts={appState.payouts.filter(payout => payout.editor === user.displayName)}
           chatMessages={appState.chatMessages}

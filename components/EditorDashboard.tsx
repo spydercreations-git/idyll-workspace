@@ -176,10 +176,10 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-medium text-white">{task.name}</h4>
-                    <p className="text-slate-400 text-sm">Task #{task.id}</p>
+                    <p className="text-slate-400 text-sm">Task #{task.task_number}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-slate-300 text-sm">Deadline: {task.deadline}</p>
+                    <p className="text-slate-300 text-sm">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
                     <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
                       task.status === 'completed' ? 'bg-green-900/50 text-green-400' :
                       task.status === 'in-progress' ? 'bg-amber-900/50 text-amber-400' :
@@ -192,9 +192,9 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 <div className="grid md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-slate-400 text-xs font-medium mb-1">Raw File</label>
-                    {task.rawFile ? (
-                      <a href={task.rawFile} className="text-blue-400 hover:text-blue-300 text-sm break-all transition-colors">
-                        {task.rawFile}
+                    {task.raw_file ? (
+                      <a href={task.raw_file} className="text-blue-400 hover:text-blue-300 text-sm break-all transition-colors">
+                        {task.raw_file}
                       </a>
                     ) : (
                       <p className="text-slate-500 text-sm">No raw file provided</p>
@@ -202,9 +202,9 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                   </div>
                   <div>
                     <label className="block text-slate-400 text-xs font-medium mb-1">Edited File</label>
-                    {task.editedFile ? (
-                      <a href={task.editedFile} className="text-green-400 hover:text-green-300 text-sm break-all transition-colors">
-                        {task.editedFile}
+                    {task.edited_file ? (
+                      <a href={task.edited_file} className="text-green-400 hover:text-green-300 text-sm break-all transition-colors">
+                        {task.edited_file}
                       </a>
                     ) : (
                       <input
@@ -213,8 +213,8 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                         className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                         onBlur={(e) => {
                           if (e.target.value) {
-                            handleTaskUpdate(task.id, 'editedFile', e.target.value);
-                            handleTaskUpdate(task.id, 'status', 'completed');
+                            handleTaskUpdate(task.id.toString(), 'edited_file', e.target.value);
+                            handleTaskUpdate(task.id.toString(), 'status', 'completed');
                           }
                         }}
                       />
@@ -224,7 +224,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                     <label className="block text-slate-400 text-xs font-medium mb-1">Status</label>
                     <select
                       value={task.status}
-                      onChange={(e) => handleTaskUpdate(task.id, 'status', e.target.value)}
+                      onChange={(e) => handleTaskUpdate(task.id.toString(), 'status', e.target.value)}
                       className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white text-sm focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                     >
                       <option value="pending">Pending</option>
@@ -257,8 +257,8 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-lg font-medium text-white">{meeting.title}</h4>
-                    <p className="text-slate-400 text-sm">{meeting.date} at {meeting.time}</p>
-                    <p className="text-slate-500 text-xs">Attendees: {meeting.attendees.join(', ')}</p>
+                    <p className="text-slate-400 text-sm">{new Date(meeting.date).toLocaleDateString()} at {meeting.time}</p>
+                    <p className="text-slate-500 text-xs">Attendees: {Array.isArray(meeting.attendees) ? meeting.attendees.join(', ') : meeting.attendees}</p>
                   </div>
                   <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors btn-focus">
                     Join
@@ -402,10 +402,12 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                   <div>
                     <h4 className="text-lg font-medium text-white">{payout.project}</h4>
                     <p className="text-slate-400 text-sm">Amount: ${payout.amount}</p>
+                    <p className="text-slate-500 text-xs">Requested: {new Date(payout.requested_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     payout.status === 'paid' ? 'bg-green-900/50 text-green-400' :
                     payout.status === 'approved' ? 'bg-blue-900/50 text-blue-400' :
+                    payout.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
                     'bg-amber-900/50 text-amber-400'
                   }`}>
                     {payout.status}
@@ -414,13 +416,13 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-slate-400 text-xs font-medium mb-1">Edited File Link</label>
-                    <a href={payout.editedLink} className="text-blue-400 hover:text-blue-300 text-sm break-all transition-colors">
-                      {payout.editedLink}
+                    <a href={payout.edited_link} className="text-blue-400 hover:text-blue-300 text-sm break-all transition-colors">
+                      {payout.edited_link}
                     </a>
                   </div>
                   <div>
                     <label className="block text-slate-400 text-xs font-medium mb-1">Payment Method</label>
-                    <p className="text-slate-300 text-sm">{payout.paymentMethod}</p>
+                    <p className="text-slate-300 text-sm">{payout.payment_method}</p>
                   </div>
                 </div>
               </div>

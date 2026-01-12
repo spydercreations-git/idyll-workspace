@@ -58,30 +58,25 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
     <div className="space-y-6">
       <div className="bg-slate-900/50 rounded-3xl p-8">
         <h3 className="text-2xl font-black text-white mb-6">Editor Submissions</h3>
-        {appState.applications.length === 0 ? (
+        {appState.applications.filter((app: any) => app.status === 'pending').length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No editor applications</p>
+            <p className="text-slate-400 text-lg">No pending editor applications</p>
             <p className="text-slate-500 text-sm mt-2">New editor applications will appear here for review</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {appState.applications.map((applicant: any) => (
+            {appState.applications.filter((app: any) => app.status === 'pending').map((applicant: any) => (
               <div key={applicant.id} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-bold text-white">{applicant.name}</h4>
                     <p className="text-slate-400 text-sm">{applicant.email}</p>
-                    <p className="text-slate-500 text-xs">Applied: {applicant.appliedAt}</p>
+                    <p className="text-slate-500 text-xs">Applied: {new Date(applicant.applied_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex gap-2">
                     <button 
                       onClick={() => {
                         onApproveUser(applicant.id);
-                        onAddNotification({
-                          type: 'user',
-                          title: 'Editor Approved',
-                          message: `${applicant.name} has been approved as an editor`
-                        });
                       }}
                       className="px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors"
                     >
@@ -100,21 +95,25 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 <div className="grid md:grid-cols-4 gap-4 text-sm">
                   <div>
                     <label className="block text-slate-400 text-xs font-bold mb-1">Software</label>
-                    <p className="text-slate-300">{applicant.software}</p>
+                    <p className="text-slate-300">{applicant.software || 'Not specified'}</p>
                   </div>
                   <div>
                     <label className="block text-slate-400 text-xs font-bold mb-1">Role</label>
-                    <p className="text-slate-300">{applicant.role}</p>
+                    <p className="text-slate-300">{applicant.role || 'Editor'}</p>
                   </div>
                   <div>
                     <label className="block text-slate-400 text-xs font-bold mb-1">Location</label>
-                    <p className="text-slate-300">{applicant.location}</p>
+                    <p className="text-slate-300">{applicant.location || 'Not specified'}</p>
                   </div>
                   <div>
                     <label className="block text-slate-400 text-xs font-bold mb-1">Portfolio</label>
-                    <a href={applicant.portfolio} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
-                      View Portfolio
-                    </a>
+                    {applicant.portfolio && applicant.portfolio !== 'Not provided' ? (
+                      <a href={applicant.portfolio} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 break-all">
+                        View Portfolio
+                      </a>
+                    ) : (
+                      <p className="text-slate-500">Not provided</p>
+                    )}
                   </div>
                 </div>
                 {applicant.contact && (
@@ -155,21 +154,30 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
         ) : (
           <div className="space-y-4">
             {appState.users.map((user: any) => (
-              <div key={user.uid} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
+              <div key={user.id} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-700 rounded-2xl flex items-center justify-center">
-                      <Edit3 className="w-6 h-6 text-blue-400" />
+                    <div className="w-12 h-12 bg-slate-700 rounded-2xl flex items-center justify-center overflow-hidden">
+                      <img 
+                        src={user.photo_url || `https://i.pravatar.cc/150?u=${user.email}`} 
+                        alt={user.display_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://i.pravatar.cc/150?u=${user.email}`;
+                        }}
+                      />
                     </div>
                     <div>
-                      <h4 className="text-lg font-bold text-white">{user.displayName}</h4>
+                      <h4 className="text-lg font-bold text-white">{user.display_name}</h4>
                       <p className="text-slate-400 text-sm">{user.email}</p>
-                      <p className="text-slate-500 text-xs">Role: {user.role}</p>
+                      <p className="text-slate-500 text-xs">Role: {user.role} • {user.approved ? 'Approved' : 'Pending'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-900/50 text-green-400">
-                      active
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                      user.approved ? 'bg-green-900/50 text-green-400' : 'bg-yellow-900/50 text-yellow-400'
+                    }`}>
+                      {user.approved ? 'Active' : 'Pending'}
                     </span>
                     <button className="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-600 transition-colors">
                       Edit
@@ -237,8 +245,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     required
                   >
                     <option value="">Select Editor</option>
-                    {appState.users.map((user: any) => (
-                      <option key={user.uid} value={user.displayName}>{user.displayName}</option>
+                    {appState.users.filter((user: any) => user.approved && user.role === 'editor').map((user: any) => (
+                      <option key={user.id} value={user.display_name}>{user.display_name}</option>
                     ))}
                   </select>
                 </div>
@@ -308,7 +316,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-bold text-white">{task.name}</h4>
-                    <p className="text-slate-400 text-sm">Task #{task.id} • Assigned to: {task.assignedTo}</p>
+                    <p className="text-slate-400 text-sm">Task #{task.task_number} • Assigned to: {task.assigned_to}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-2 py-1 rounded-lg text-xs font-bold ${
@@ -328,13 +336,29 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-slate-300 text-sm">Deadline: {task.deadline}</p>
+                  <p className="text-slate-300 text-sm">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
                   <div className="flex gap-2">
                     <button className="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-600 transition-colors">
                       Edit
                     </button>
                   </div>
                 </div>
+                {task.raw_file && (
+                  <div className="mt-4 pt-4 border-t border-slate-700">
+                    <label className="block text-slate-400 text-xs font-bold mb-1">Raw File</label>
+                    <a href={task.raw_file} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm break-all">
+                      {task.raw_file}
+                    </a>
+                  </div>
+                )}
+                {task.edited_file && (
+                  <div className="mt-2">
+                    <label className="block text-slate-400 text-xs font-bold mb-1">Edited File</label>
+                    <a href={task.edited_file} target="_blank" rel="noopener noreferrer" className="text-green-400 hover:text-green-300 text-sm break-all">
+                      {task.edited_file}
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -441,27 +465,27 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     />
                     <span className="text-slate-300">All Team</span>
                   </label>
-                  {appState.users.map((user: any) => (
-                    <label key={user.uid} className="flex items-center">
+                  {appState.users.filter((user: any) => user.approved).map((user: any) => (
+                    <label key={user.id} className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={newMeeting.attendees.includes(user.displayName)}
+                        checked={newMeeting.attendees.includes(user.display_name)}
                         onChange={(e) => {
                           if (e.target.checked) {
                             setNewMeeting({
                               ...newMeeting, 
-                              attendees: [...newMeeting.attendees.filter(a => a !== 'All Team'), user.displayName]
+                              attendees: [...newMeeting.attendees.filter(a => a !== 'All Team'), user.display_name]
                             });
                           } else {
                             setNewMeeting({
                               ...newMeeting,
-                              attendees: newMeeting.attendees.filter(a => a !== user.displayName)
+                              attendees: newMeeting.attendees.filter(a => a !== user.display_name)
                             });
                           }
                         }}
                         className="mr-2"
                       />
-                      <span className="text-slate-300">{user.displayName}</span>
+                      <span className="text-slate-300">{user.display_name}</span>
                     </label>
                   ))}
                 </div>
@@ -497,7 +521,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-bold text-white">{meeting.title}</h4>
-                    <p className="text-slate-400 text-sm">{meeting.date} at {meeting.time}</p>
+                    <p className="text-slate-400 text-sm">{new Date(meeting.date).toLocaleDateString()} at {meeting.time}</p>
                     <p className="text-slate-500 text-xs">Organized by: {meeting.organizer}</p>
                   </div>
                   <div className="flex gap-2">
@@ -514,7 +538,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 </div>
                 <div>
                   <label className="block text-slate-400 text-xs font-bold mb-1">Attendees</label>
-                  <p className="text-slate-300 text-sm">{meeting.attendees.join(', ')}</p>
+                  <p className="text-slate-300 text-sm">{Array.isArray(meeting.attendees) ? meeting.attendees.join(', ') : meeting.attendees}</p>
                 </div>
               </div>
             ))}
@@ -541,12 +565,13 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                   <div>
                     <h4 className="text-lg font-bold text-white">{payout.project}</h4>
                     <p className="text-slate-400 text-sm">Editor: {payout.editor} • Amount: ${payout.amount}</p>
-                    <p className="text-slate-500 text-xs">Requested: {payout.requestedAt}</p>
+                    <p className="text-slate-500 text-xs">Requested: {new Date(payout.requested_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                       payout.status === 'paid' ? 'bg-green-900/50 text-green-400' :
                       payout.status === 'approved' ? 'bg-blue-900/50 text-blue-400' :
+                      payout.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
                       'bg-yellow-900/50 text-yellow-400'
                     }`}>
                       {payout.status}
@@ -556,11 +581,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                         <button 
                           onClick={() => {
                             onUpdatePayout(payout.id, { status: 'approved' });
-                            onAddNotification({
-                              type: 'payout',
-                              title: 'Payout Approved',
-                              message: `Payout for ${payout.project} has been approved`
-                            });
                           }}
                           className="px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors"
                         >
@@ -578,11 +598,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                       <button 
                         onClick={() => {
                           onUpdatePayout(payout.id, { status: 'paid' });
-                          onAddNotification({
-                            type: 'payout',
-                            title: 'Payment Completed',
-                            message: `Payment for ${payout.project} has been processed`
-                          });
                         }}
                         className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-colors"
                       >
@@ -591,9 +606,17 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     )}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-slate-400 text-xs font-bold mb-1">Payment Method</label>
-                  <p className="text-slate-300 text-sm">{payout.paymentMethod}</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold mb-1">Edited File Link</label>
+                    <a href={payout.edited_link} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 text-sm break-all">
+                      {payout.edited_link}
+                    </a>
+                  </div>
+                  <div>
+                    <label className="block text-slate-400 text-xs font-bold mb-1">Payment Method</label>
+                    <p className="text-slate-300 text-sm">{payout.payment_method}</p>
+                  </div>
                 </div>
               </div>
             ))}
