@@ -44,6 +44,8 @@ export interface Database {
           message: string;
           timestamp: string;
           type: 'user' | 'system';
+          edited_at: string | null;
+          is_edited: boolean;
         };
         Insert: {
           sender: string;
@@ -52,6 +54,8 @@ export interface Database {
         };
         Update: {
           message?: string;
+          edited_at?: string;
+          is_edited?: boolean;
         };
       };
     };
