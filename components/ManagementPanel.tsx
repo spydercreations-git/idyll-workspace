@@ -471,7 +471,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?embed=true&v=table`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?v=table&embed=true`}
                 width="100%" 
                 height="600px"
                 style={{
@@ -481,6 +481,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 className="notion-embed"
                 title="Task Management Database"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">📋 Live from Notion</span>
@@ -856,7 +857,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?embed=true&v=table`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?v=table&embed=true`}
                 width="100%" 
                 height="500px"
                 style={{
@@ -866,6 +867,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 className="notion-embed"
                 title="Meeting Management Database"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">📅 Live from Notion</span>
@@ -926,7 +928,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?embed=true&v=table`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?v=table&embed=true`}
                 width="100%" 
                 height="500px"
                 style={{
@@ -936,6 +938,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                 className="notion-embed"
                 title="Payout Management Database"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">💰 Live from Notion</span>

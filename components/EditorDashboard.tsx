@@ -280,7 +280,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?embed=true&v=table&filter_by=assigned_to&filter_value=${encodeURIComponent(user.email)}`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?v=table&embed=true`}
                 width="100%" 
                 height="600px"
                 style={{
@@ -290,6 +290,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 className="notion-embed"
                 title="My Tasks Database"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">📋 Live from Notion</span>
@@ -297,7 +298,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
             </div>
           </div>
           <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your personal tasks filtered by email - Changes sync in real-time
+            ✅ Your personal tasks from Notion - Changes sync in real-time
           </p>
         </div>
 
@@ -447,7 +448,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?embed=true&v=table&filter_by=attendees_emails&filter_value=${encodeURIComponent(user.email)}`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?v=table&embed=true`}
                 width="100%" 
                 height="500px"
                 style={{
@@ -457,6 +458,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 className="notion-embed"
                 title="Meeting Calendar"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">📅 Live from Notion</span>
@@ -464,7 +466,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
             </div>
           </div>
           <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your meetings filtered by email - Changes sync in real-time
+            ✅ Your meetings from Notion - Changes sync in real-time
           </p>
         </div>
 
@@ -711,7 +713,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             <div className="relative">
               <iframe 
-                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?embed=true&v=table&filter_by=editor_email&filter_value=${encodeURIComponent(user.email)}`}
+                src={`https://www.notion.so/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?v=table&embed=true`}
                 width="100%" 
                 height="500px"
                 style={{
@@ -721,6 +723,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                 className="notion-embed"
                 title="My Payouts Database"
                 sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                allow="fullscreen"
               />
               <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
                 <span className="text-xs text-slate-300">💰 Live from Notion</span>
@@ -728,7 +731,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
             </div>
           </div>
           <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your personal payouts filtered by email - Changes sync in real-time
+            ✅ Your personal payouts from Notion - Changes sync in real-time
           </p>
         </div>
 
