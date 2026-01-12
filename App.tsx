@@ -780,12 +780,11 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center text-slate-100 font-sans selection:bg-blue-500/20 relative">
-      <AnimatedLiquidBackground />
-      <div className="relative z-10 text-center">
-        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
-        <p className="text-blue-400 font-medium text-lg animate-pulse">Loading Idyll Productions...</p>
-        <p className="text-slate-400 text-sm mt-2">Connecting to database...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+      <div className="text-center">
+        <div className="spinner mb-4 mx-auto"></div>
+        <p className="text-lg font-medium accent-blue">Loading Idyll Productions...</p>
+        <p className="text-gray-400 text-sm mt-2">Connecting to database...</p>
       </div>
     </div>
   );
@@ -834,8 +833,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen text-slate-100 font-sans selection:bg-blue-500/20 relative">
-      <AnimatedLiquidBackground />
+    <div className="min-h-screen bg-gray-900 text-white">
       <div className="relative z-10">
         <CustomCursor />
         {renderPage()}
