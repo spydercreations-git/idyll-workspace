@@ -272,11 +272,73 @@ const App: React.FC = () => {
       // Check if user exists in our database first
       const { data: userData, error: userError } = await usersService.getUserByEmail(email);
       
+      console.log('🔍 Database query result:', { userData, userError });
+      
       if (!userData) {
+        // If it's an admin email, create the user automatically
+        if (email === 'idyllproductionsofficial@gmail.com' || 
+            email === 'harshpawar7711@gmail.com' || 
+            email === 'rohitidyllproductions@gmail.com') {
+          
+          console.log('👑 Admin email detected, creating admin user...');
+          
+          let role: 'owner' | 'moderator' = 'moderator';
+          if (email === 'idyllproductionsofficial@gmail.com') {
+            role = 'owner';
+          }
+          
+          const newUser = {
+            uid: `admin-${Date.now()}`,
+            email: email,
+            display_name: username || email.split('@')[0],
+            photo_url: `https://i.pravatar.cc/150?u=${email}`,
+            role: role,
+            approved: true
+          };
+          
+          const { data: createdUser, error: createError } = await usersService.createUser(newUser);
+          
+          if (createError) {
+            console.error('❌ Error creating admin user:', createError);
+            alert('Error creating admin user. Please try again.');
+            setLoading(false);
+            return;
+          }
+          
+          console.log('✅ Admin user created:', createdUser);
+          
+          // Use the created user data
+          const userProfile = {
+            uid: createdUser.uid,
+            email: createdUser.email,
+            displayName: createdUser.display_name,
+            photoURL: createdUser.photo_url || 'https://i.pravatar.cc/150?u=' + createdUser.email,
+            role: createdUser.role as 'editor' | 'moderator' | 'owner',
+            approved: createdUser.approved
+          };
+
+          setUser(userProfile);
+          localStorage.setItem('idyll_user', JSON.stringify(userProfile));
+          
+          if (role === 'owner' || role === 'moderator') {
+            setCurrentPage('management');
+          } else {
+            setCurrentPage('dashboard');
+          }
+          
+          await loadAppData();
+          
+          alert(`Welcome! Admin account created and logged in as ${role}.`);
+          setLoading(false);
+          return;
+        }
+        
         alert('User not found. Please create an account first or contact admin.');
         setLoading(false);
         return;
       }
+
+      console.log('👤 Found user:', userData);
 
       if (!userData.approved) {
         alert('Account not approved yet. Please wait for approval from moderators.');
@@ -295,75 +357,46 @@ const App: React.FC = () => {
         approved: userData.approved
       };
 
-      // For admin users (owner/moderator), allow login without password check
-      if (userData.role === 'owner' || userData.role === 'moderator') {
-        console.log('👑 Admin user detected, allowing login');
-        
-        setUser(userProfile);
-        
-        // Save user session to localStorage
-        localStorage.setItem('idyll_user', JSON.stringify(userProfile));
-        
-        // Navigate to management panel for admin users
-        setCurrentPage('management');
-        await loadAppData();
-        
-        // Add login notification
-        await addNotification({
-          type: 'user',
-          title: 'Admin Login',
-          message: `${userData.display_name} logged in`,
-          urgent: false
-        });
-        
-        setLoading(false);
-        return;
-      }
+      console.log('👤 Setting user profile:', userProfile);
 
-      // For regular editors, try Supabase auth but allow fallback
-      try {
-        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (authError) {
-          console.log('⚠️ Supabase auth failed, but user exists and is approved, allowing login');
-        }
-      } catch (authError) {
-        console.log('⚠️ Supabase auth error, but continuing with database user');
-      }
-
-      // Set user regardless of Supabase auth result (since user exists and is approved)
+      // Set user
       setUser(userProfile);
       
       // Save user session to localStorage
       localStorage.setItem('idyll_user', JSON.stringify(userProfile));
+      console.log('💾 Saved user to localStorage');
       
       // Navigate to appropriate page based on role
+      let targetPage = 'dashboard';
       if (userData.role === 'editor') {
-        setCurrentPage('dashboard');
+        targetPage = 'dashboard';
       } else if (userData.role === 'moderator' || userData.role === 'owner') {
-        setCurrentPage('management');
-      } else {
-        setCurrentPage('dashboard');
+        targetPage = 'management';
       }
       
+      console.log('🎯 Navigating to page:', targetPage);
+      setCurrentPage(targetPage);
+      
+      console.log('📊 Loading app data...');
       await loadAppData();
       
-      // Add login notification
-      await addNotification({
-        type: 'user',
-        title: 'User Login',
-        message: `${userData.display_name} logged in`,
-        urgent: false
-      });
+      // Try to add notification but don't fail if it doesn't work
+      try {
+        await addNotification({
+          type: 'user',
+          title: 'User Login',
+          message: `${userData.display_name} logged in`,
+          urgent: false
+        });
+      } catch (notifError) {
+        console.log('⚠️ Notification failed but continuing:', notifError);
+      }
 
       console.log('✅ Login successful for:', userData.display_name);
       
     } catch (error) {
       console.error('❌ Login error:', error);
-      alert('Login failed. Please try again or contact admin.');
+      alert('Login failed. Error: ' + error.message);
     }
     
     setLoading(false);
