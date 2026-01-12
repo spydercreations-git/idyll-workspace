@@ -31,7 +31,9 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   onDeleteMeeting,
   onUpdatePayout,
   onAddChatMessage,
-  onAddNotification
+  onAddNotification,
+  onRemoveUser,
+  onChangeUserRole
 }) => {
   const [activeTab, setActiveTab] = useState('approval');
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -176,8 +178,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     <select
                       value={user.role}
                       onChange={(e) => {
-                        // Handle role change
-                        console.log(`Changing role for ${user.email} to ${e.target.value}`);
+                        onChangeUserRole(user.id, user.email, user.display_name, e.target.value);
                       }}
                       className="px-3 py-1 bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
                     >
@@ -187,9 +188,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     </select>
                     <button 
                       onClick={() => {
-                        if (confirm(`Are you sure you want to remove ${user.display_name}?`)) {
-                          console.log(`Removing user: ${user.email}`);
-                        }
+                        onRemoveUser(user.id, user.email, user.display_name);
                       }}
                       className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
                     >
