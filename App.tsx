@@ -780,10 +780,10 @@ const App: React.FC = () => {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
       <div className="text-center">
         <div className="spinner mb-4 mx-auto"></div>
-        <p className="text-lg font-medium accent-blue">Loading Idyll Productions...</p>
+        <p className="text-lg font-medium text-green-400">Loading Idyll Productions...</p>
         <p className="text-gray-400 text-sm mt-2">Connecting to database...</p>
       </div>
     </div>
@@ -833,7 +833,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 text-white">
+    <div className="min-h-screen bg-black text-white">
       <div className="relative z-10">
         <CustomCursor />
         {renderPage()}
