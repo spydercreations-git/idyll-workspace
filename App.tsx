@@ -981,6 +981,7 @@ const App: React.FC = () => {
             onAddNotification={addNotification}
             onRemoveUser={removeUser}
             onChangeUserRole={changeUserRole}
+            onRefreshData={loadAppData}
           />;
         }
         return <EditorDashboard 
@@ -998,6 +999,7 @@ const App: React.FC = () => {
           onAddChatMessage={addChatMessage}
           onEditChatMessage={editChatMessage}
           onDeleteChatMessage={deleteChatMessage}
+          onRefreshData={loadAppData}
         />;
       default: return <WelcomePage onNavigate={setCurrentPage} />;
     }

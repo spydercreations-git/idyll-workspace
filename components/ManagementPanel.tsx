@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { UserCheck, Users, CheckSquare, Calendar, DollarSign, MessageSquare, Bell, LogOut, Shield, Crown, Edit3, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import { UserProfile } from '../types';
+import { supabase } from '../lib/supabase';
 
 interface ManagementPanelProps {
   user: UserProfile;
@@ -19,6 +20,7 @@ interface ManagementPanelProps {
   onAddNotification: (notification: any) => void;
   onRemoveUser: (userId: number, userEmail: string, userName: string) => void;
   onChangeUserRole: (userId: number, userEmail: string, userName: string, newRole: string) => void;
+  onRefreshData?: () => void;
 }
 
 const ManagementPanel: React.FC<ManagementPanelProps> = ({ 
@@ -37,7 +39,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   onDeleteChatMessage,
   onAddNotification,
   onRemoveUser,
-  onChangeUserRole
+  onChangeUserRole,
+  onRefreshData
 }) => {
   const [activeTab, setActiveTab] = useState('approval');
   const [showCreateTask, setShowCreateTask] = useState(false);
@@ -174,15 +177,38 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                         onClick={async () => {
                           if (confirm(`Approve ${pendingUser.display_name} as an editor?`)) {
                             console.log('Approving user:', pendingUser.email);
-                            // Find corresponding application
-                            const application = appState.applications.find((app: any) => app.email === pendingUser.email);
-                            if (application) {
-                              await onApproveUser(application.id);
-                            } else {
-                              // Create a temporary application for approval
-                              alert(`${pendingUser.display_name} has been approved! They can now access their dashboard.`);
-                              // Force page refresh to update the interface
+                            
+                            try {
+                              // Update user approval status immediately
+                              const { error: updateError } = await supabase
+                                .from('users')
+                                .update({ approved: true })
+                                .eq('id', pendingUser.id);
+                              
+                              if (updateError) {
+                                throw updateError;
+                              }
+                              
+                              // Find corresponding application and approve it
+                              const application = appState.applications.find((app: any) => app.email === pendingUser.email);
+                              if (application) {
+                                await onApproveUser(application.id);
+                              }
+                              
+                              // Add success notification
+                              await onAddNotification({
+                                type: 'user',
+                                title: 'User Approved',
+                                message: `${pendingUser.display_name} has been approved and can now access their dashboard`,
+                                urgent: false
+                              });
+                              
+                              // Force immediate data refresh
                               window.location.reload();
+                              
+                            } catch (error) {
+                              console.error('Error approving user:', error);
+                              alert('Error approving user: ' + error.message);
                             }
                           }
                         }}
@@ -270,8 +296,17 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                     </span>
                     <select
                       value={user.role}
-                      onChange={(e) => {
-                        onChangeUserRole(user.id, user.email, user.display_name, e.target.value);
+                      onChange={async (e) => {
+                        try {
+                          await onChangeUserRole(user.id, user.email, user.display_name, e.target.value);
+                          // Force immediate refresh
+                          if (onRefreshData) {
+                            onRefreshData();
+                          }
+                        } catch (error) {
+                          console.error('Error changing user role:', error);
+                          alert('Error changing user role: ' + error.message);
+                        }
                       }}
                       className="px-3 py-1 bg-slate-700 text-slate-300 text-xs rounded-lg border border-slate-600 focus:border-blue-500 focus:outline-none"
                     >
@@ -280,8 +315,19 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
                       <option value="owner">Owner</option>
                     </select>
                     <button 
-                      onClick={() => {
-                        onRemoveUser(user.id, user.email, user.display_name);
+                      onClick={async () => {
+                        if (confirm(`Are you sure you want to remove ${user.display_name}? This will delete all their data.`)) {
+                          try {
+                            await onRemoveUser(user.id, user.email, user.display_name);
+                            // Force immediate refresh
+                            if (onRefreshData) {
+                              onRefreshData();
+                            }
+                          } catch (error) {
+                            console.error('Error removing user:', error);
+                            alert('Error removing user: ' + error.message);
+                          }
+                        }
                       }}
                       className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
                     >
@@ -420,7 +466,33 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           </div>
         )}
 
-        {/* Notion-Style Database Table */}
+        {/* Notion Embed for Task Management */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?embed=true&v=table`}
+                width="100%" 
+                height="600px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="Task Management Database"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">📋 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Connected to Idyll Productions Task Database - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Fallback: Show tasks from database if Notion embed fails */}
         {appState.tasks.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">No tasks created yet</p>
@@ -779,6 +851,33 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           </div>
         )}
 
+        {/* Notion Embed for Meeting Management */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?embed=true&v=table`}
+                width="100%" 
+                height="500px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="Meeting Management Database"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">📅 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Connected to Idyll Productions Meeting Database - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Fallback: Show meetings from database if needed */}
         {appState.meetings.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">No meetings scheduled</p>
@@ -822,6 +921,33 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
     <div className="space-y-6">
       <div className="bg-slate-900/50 rounded-3xl p-8">
         <h3 className="text-2xl font-black text-white mb-6">Payout Management</h3>
+        {/* Notion Embed for Payout Management */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?embed=true&v=table`}
+                width="100%" 
+                height="500px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="Payout Management Database"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">💰 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Connected to Idyll Productions Payout Database - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Fallback: Show payouts from database if needed */}
         {appState.payouts.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">No payout requests</p>
@@ -1014,6 +1140,10 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
         </form>
         <p className="text-slate-500 text-xs mt-2 text-center">
           💡 Real-time WebSocket chat - messages appear instantly without refresh
+          <br />
+          ✅ Edit: Click edit icon, press Enter to save, Escape to cancel
+          <br />
+          🗑️ Delete: Click delete icon to remove message permanently
         </p>
       </div>
     </div>
@@ -1105,23 +1235,35 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           </div>
         )}
         
-        {/* Activity Summary */}
+        {/* Real-Time Activity Summary */}
         <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center border border-blue-500/20">
             <div className="text-2xl font-bold text-blue-400">{appState.tasks.length}</div>
             <div className="text-slate-400 text-sm">Total Tasks</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {appState.tasks.filter((t: any) => t.status === 'completed').length} completed
+            </div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center border border-purple-500/20">
             <div className="text-2xl font-bold text-purple-400">{appState.meetings.length}</div>
             <div className="text-slate-400 text-sm">Meetings</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {appState.meetings.filter((m: any) => new Date(m.date) >= new Date()).length} upcoming
+            </div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center border border-green-500/20">
             <div className="text-2xl font-bold text-green-400">{appState.payouts.length}</div>
             <div className="text-slate-400 text-sm">Payouts</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {appState.payouts.filter((p: any) => p.status === 'pending').length} pending
+            </div>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center border border-amber-500/20">
             <div className="text-2xl font-bold text-amber-400">{appState.users.filter((u: any) => u.approved).length}</div>
             <div className="text-slate-400 text-sm">Active Users</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {appState.users.filter((u: any) => !u.approved).length} pending approval
+            </div>
           </div>
         </div>
       </div>

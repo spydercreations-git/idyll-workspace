@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, CheckSquare, Calendar, MessageSquare, DollarSign, LogOut, Edit, Trash2 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { useTiltEffect } from '../hooks/useTiltEffect';
+import { supabase } from '../lib/supabase';
 
 interface EditorDashboardProps {
   user: UserProfile;
@@ -15,6 +16,7 @@ interface EditorDashboardProps {
   onAddChatMessage: (message: string, sender: string) => void;
   onEditChatMessage?: (messageId: number, newMessage: string) => void;
   onDeleteChatMessage?: (messageId: number) => void;
+  onRefreshData?: () => void;
 }
 
 const EditorDashboard: React.FC<EditorDashboardProps> = ({ 
@@ -28,7 +30,8 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   onCreatePayout, 
   onAddChatMessage,
   onEditChatMessage,
-  onDeleteChatMessage
+  onDeleteChatMessage,
+  onRefreshData
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [showPayoutForm, setShowPayoutForm] = useState(false);
@@ -55,6 +58,32 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
       localStorage.setItem(`notion_db_${user.email}`, profileData.notionDatabaseId);
     }
   }, [profileData.notionDatabaseId, user.email]);
+
+  // Set up real-time chat subscription
+  useEffect(() => {
+    console.log('🔄 Setting up real-time chat subscription...');
+    
+    const subscription = supabase
+      .channel('chat-realtime')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          console.log('💬 Real-time chat update:', payload);
+          // Force immediate refresh of chat data
+          if (onRefreshData) {
+            onRefreshData();
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log('Chat subscription status:', status);
+      });
+
+    return () => {
+      console.log('🔄 Cleaning up chat subscription');
+      subscription.unsubscribe();
+    };
+  }, [onRefreshData]);
 
   const switchToManagement = () => {
     // This would be handled by proper role management in production
@@ -389,16 +418,23 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
         <div className="mb-6">
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
             {profileData.notionDatabaseId ? (
-              <iframe 
-                src={`https://www.notion.so/embed/${profileData.notionDatabaseId}`}
-                width="100%" 
-                height="500px"
-                style={{
-                  border: 'none',
-                  background: 'transparent'
-                }}
-                className="notion-embed"
-              />
+              <div className="relative">
+                <iframe 
+                  src={`https://www.notion.so/embed/${profileData.notionDatabaseId}?embed=true&v=table`}
+                  width="100%" 
+                  height="500px"
+                  style={{
+                    border: 'none',
+                    background: 'transparent'
+                  }}
+                  className="notion-embed"
+                  title="Personal Meeting Calendar"
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                />
+                <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                  <span className="text-xs text-slate-300">📅 Live from Notion</span>
+                </div>
+              </div>
             ) : (
               <div className="p-8 text-center">
                 <p className="text-slate-400 text-lg mb-2">📅 Personal Meeting Calendar</p>
@@ -414,8 +450,8 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           </div>
           <p className="text-slate-500 text-xs mt-2 text-center">
             {profileData.notionDatabaseId ? 
-              'Your personal meeting calendar from Notion workspace' : 
-              'Add your Notion database ID in Profile Settings to see your personal meetings'
+              '✅ Connected to your personal Notion workspace' : 
+              '⚠️ Add your Notion database ID in Profile Settings to see your personal meetings'
             }
           </p>
         </div>
