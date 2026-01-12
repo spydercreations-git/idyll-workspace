@@ -565,10 +565,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           <div className="flex items-center justify-between mb-8 md:mb-12 glass-panel p-4 rounded-2xl animate-slide-down">
             <div className="flex items-center gap-4 md:gap-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
-                  <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
-                </div>
-                <span className="hidden sm:block text-xs font-medium text-slate-400">{user.displayName}</span>
+                <span className="text-sm font-medium text-slate-300">{user.displayName}</span>
               </div>
               <div className="h-4 w-px bg-slate-800"></div>
               <div className="flex items-center gap-2">

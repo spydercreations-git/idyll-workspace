@@ -47,6 +47,13 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
+  // Save current page to localStorage
+  useEffect(() => {
+    if (currentPage !== 'welcome') {
+      localStorage.setItem('currentPage', currentPage);
+    }
+  }, [currentPage]);
+
   const initializeApp = async () => {
     setLoading(true);
     try {
@@ -78,14 +85,21 @@ const App: React.FC = () => {
             role: userData.role as 'editor' | 'moderator' | 'owner',
             approved: userData.approved
           });
-          // Don't change page if user is already on a valid page
-          if (currentPage === 'welcome' || currentPage === 'login' || currentPage === 'create-account') {
+          // Restore saved page or default to dashboard
+          const savedPage = localStorage.getItem('currentPage');
+          if (savedPage && savedPage !== 'welcome') {
+            setCurrentPage(savedPage);
+          } else {
             setCurrentPage('dashboard');
           }
         } else if (userData && !userData.approved) {
-          if (currentPage !== 'approval') {
-            setCurrentPage('approval');
-          }
+          setCurrentPage('approval');
+        }
+      } else {
+        // No session, check for saved page
+        const savedPage = localStorage.getItem('currentPage');
+        if (savedPage && savedPage !== 'dashboard') {
+          setCurrentPage(savedPage);
         }
       }
     } catch (error) {
@@ -96,12 +110,12 @@ const App: React.FC = () => {
   const setupNotionSync = () => {
     console.log('🔄 Setting up Notion polling...');
     
-    // Start polling Notion for changes every 3 seconds
+    // Start polling Notion for changes every 1 second for better real-time feel
     notionDatabase.startPolling((type: string, data: any) => {
       console.log(`🔄 Notion change detected: ${type}`, data);
       // Refresh app data when Notion changes are detected
       loadAppData();
-    });
+    }, 1000); // Poll every 1 second instead of 3
   };
 
   const setupRealtimeSubscriptions = () => {

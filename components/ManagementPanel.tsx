@@ -161,16 +161,6 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
               <div key={user.id} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-700 rounded-2xl flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={user.photo_url || `https://i.pravatar.cc/150?u=${user.email}`} 
-                        alt={user.display_name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = `https://i.pravatar.cc/150?u=${user.email}`;
-                        }}
-                      />
-                    </div>
                     <div>
                       <h4 className="text-lg font-bold text-white">{user.display_name}</h4>
                       <p className="text-slate-400 text-sm">{user.email}</p>
@@ -958,15 +948,12 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
           <div className="flex items-center justify-between mb-8 md:mb-12 bg-slate-900/50 backdrop-blur-xl p-4 rounded-3xl border border-slate-800/50">
             <div className="flex items-center gap-4 md:gap-6">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
-                  <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
-                </div>
-                <span className="hidden sm:block text-[11px] font-black uppercase tracking-widest text-slate-400">{user.displayName}</span>
+                <span className="text-sm font-medium text-slate-300">{user.displayName}</span>
               </div>
               <div className="h-4 w-[1px] bg-slate-800"></div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></div>
-                <span className="text-[9px] font-black uppercase tracking-widest text-purple-500/80">Management Panel</span>
+                <span className="text-xs font-medium text-purple-500/80">Management Panel</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -983,7 +970,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
               </button>
               <div className="hidden md:flex items-center gap-2 px-4 py-1.5 bg-slate-800/50 rounded-full border border-slate-700/50">
                 {user.role === 'owner' ? <Crown className="w-4 h-4 text-yellow-400" /> : <Shield className="w-4 h-4 text-purple-400" />}
-                <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{user.role}</span>
+                <span className="text-xs font-medium text-slate-500">{user.role}</span>
               </div>
             </div>
           </div>

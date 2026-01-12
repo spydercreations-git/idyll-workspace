@@ -526,7 +526,7 @@ export const notionDatabase = {
   },
 
   // POLLING FOR REAL-TIME UPDATES
-  startPolling(callback: (type: string, data: any) => void) {
+  startPolling(callback: (type: string, data: any) => void, interval: number = 1000) {
     console.log('🔄 Starting Notion polling for real-time updates...');
     
     // Store last check time
@@ -539,7 +539,7 @@ export const notionDatabase = {
       } catch (error) {
         console.error('❌ Error polling Notion:', error);
       }
-    }, 3000); // Poll every 3 seconds for better reliability
+    }, interval); // Use provided interval or default to 1 second
   },
 
   async pollForChanges(callback: (type: string, data: any) => void, lastCheckTime: number) {
