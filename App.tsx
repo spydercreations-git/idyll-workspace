@@ -96,7 +96,7 @@ const App: React.FC = () => {
   const setupNotionSync = () => {
     console.log('🔄 Setting up Notion polling...');
     
-    // Start polling Notion for changes every 2 seconds
+    // Start polling Notion for changes every 3 seconds
     notionDatabase.startPolling((type: string, data: any) => {
       console.log(`🔄 Notion change detected: ${type}`, data);
       // Refresh app data when Notion changes are detected
@@ -558,7 +558,10 @@ const App: React.FC = () => {
         urgent: true
       });
       
+      // Immediately refresh data to show the new task
+      console.log('🔄 Refreshing data after task creation...');
       await loadAppData();
+      
       alert('Task created successfully and synced to Notion!');
     } catch (error) {
       console.error('Error creating task:', error);
@@ -587,7 +590,10 @@ const App: React.FC = () => {
           });
         }
         
+        // Immediately refresh data to show the updates
+        console.log('🔄 Refreshing data after task update...');
         await loadAppData();
+        
         console.log('Task updated successfully');
       } else {
         throw new Error('Task not found');
@@ -722,11 +728,42 @@ const App: React.FC = () => {
         throw error;
       }
       
-      // Don't need to manually update state - real-time subscription will handle it
       console.log('Chat message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Error sending message: ' + error.message);
+    }
+  };
+
+  const editChatMessage = async (messageId: number, newMessage: string) => {
+    try {
+      console.log('Editing chat message:', messageId, newMessage);
+      const { data, error } = await chatService.editMessage(messageId, newMessage);
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Chat message edited successfully');
+    } catch (error) {
+      console.error('Error editing message:', error);
+      alert('Error editing message: ' + error.message);
+    }
+  };
+
+  const deleteChatMessage = async (messageId: number) => {
+    try {
+      console.log('Deleting chat message:', messageId);
+      const { error } = await chatService.deleteMessage(messageId);
+      
+      if (error) {
+        throw error;
+      }
+      
+      console.log('Chat message deleted successfully');
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      alert('Error deleting message: ' + error.message);
     }
   };
 
@@ -750,6 +787,119 @@ const App: React.FC = () => {
     } catch (error) {
       console.error('Error creating notification:', error);
       // Don't show alert for notification errors as they're not critical
+    }
+  };
+
+  const removeUser = async (userId: number, userEmail: string, userName: string) => {
+    if (!confirm(`Are you sure you want to remove ${userName}? This will delete all their data from tasks, meetings, payouts, and applications.`)) {
+      return;
+    }
+
+    try {
+      console.log('Removing user and all related data:', userEmail);
+      
+      // 1. Remove user from Supabase
+      const { error: userError } = await usersService.deleteUser(userId);
+      if (userError) {
+        console.error('Error removing user from Supabase:', userError);
+      }
+
+      // 2. Remove all tasks assigned to this user from Notion
+      const userTasks = appState.tasks.filter(task => task.assigned_to === userEmail);
+      for (const task of userTasks) {
+        try {
+          await notionDatabase.deleteTask(task.id);
+        } catch (error) {
+          console.error('Error removing task:', error);
+        }
+      }
+
+      // 3. Remove all meetings where user is attendee from Notion
+      const userMeetings = appState.meetings.filter(meeting => 
+        (Array.isArray(meeting.attendees_emails) ? meeting.attendees_emails : [meeting.attendees_emails]).includes(userEmail)
+      );
+      for (const meeting of userMeetings) {
+        try {
+          await notionDatabase.deleteMeeting(meeting.id);
+        } catch (error) {
+          console.error('Error removing meeting:', error);
+        }
+      }
+
+      // 4. Remove all payouts for this user from Notion
+      const userPayouts = appState.payouts.filter(payout => payout.editor_email === userEmail);
+      for (const payout of userPayouts) {
+        try {
+          await notionDatabase.deletePayout(payout.id);
+        } catch (error) {
+          console.error('Error removing payout:', error);
+        }
+      }
+
+      // 5. Remove all applications for this user from Notion
+      const userApplications = appState.applications.filter(app => app.email === userEmail);
+      for (const application of userApplications) {
+        try {
+          await notionDatabase.deleteApplication(application.id);
+        } catch (error) {
+          console.error('Error removing application:', error);
+        }
+      }
+
+      // 6. Add notification about user removal
+      await addNotification({
+        type: 'user',
+        title: 'User Removed',
+        message: `${userName} and all their data has been removed from the system`,
+        urgent: true
+      });
+
+      // 7. Refresh all data
+      await loadAppData();
+      
+      alert(`${userName} and all their related data has been successfully removed from the system.`);
+    } catch (error) {
+      console.error('Error removing user:', error);
+      alert('Error removing user: ' + error.message);
+    }
+  };
+
+  const changeUserRole = async (userId: number, userEmail: string, userName: string, newRole: string) => {
+    try {
+      console.log('Changing user role:', userEmail, 'to', newRole);
+      
+      // Update user role in Supabase
+      const { error } = await usersService.updateUser(userId, { role: newRole as 'editor' | 'moderator' | 'owner' });
+      if (error) {
+        throw error;
+      }
+
+      // Add notification about role change
+      await addNotification({
+        type: 'user',
+        title: 'Role Changed',
+        message: `${userName}'s role has been changed to ${newRole}`,
+        urgent: false
+      });
+
+      // If current user's role was changed, update their session
+      if (user && user.email === userEmail) {
+        setUser({
+          ...user,
+          role: newRole as 'editor' | 'moderator' | 'owner'
+        });
+        
+        // Refresh the page to update interface
+        window.location.reload();
+      }
+
+      // Refresh all data
+      await loadAppData();
+      
+      alert(`${userName}'s role has been successfully changed to ${newRole}.`);
+    } catch (error) {
+      console.error('Error changing user role:', error);
+      alert('Error changing user role: ' + error.message);
     }
   };
 
@@ -778,13 +928,38 @@ const App: React.FC = () => {
       console.error('Error submitting application:', error);
     }
   };
+    try {
+      await notionDatabase.createApplication({
+        name: applicationData.name,
+        email: applicationData.email,
+        contact: applicationData.contact,
+        location: applicationData.location,
+        software: applicationData.software,
+        role: applicationData.role,
+        portfolio: applicationData.portfolioLink
+      });
+
+      // Add notification for moderators
+      await addNotification({
+        type: 'user',
+        title: 'New Editor Application',
+        message: `${applicationData.name} applied to join as an editor`,
+        urgent: true
+      });
+
+      await loadAppData();
+    } catch (error) {
+      console.error('Error submitting application:', error);
+    }
+  };
 
   if (loading) return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-black text-white">
-      <div className="text-center">
-        <div className="spinner mb-4 mx-auto"></div>
-        <p className="text-lg font-medium text-green-400">Loading Idyll Productions...</p>
-        <p className="text-gray-400 text-sm mt-2">Connecting to database...</p>
+    <div className="min-h-screen flex flex-col items-center justify-center text-slate-100 font-sans selection:bg-blue-500/20 relative">
+      <AnimatedLiquidBackground />
+      <div className="relative z-10 text-center">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+        <p className="text-blue-400 font-medium text-lg animate-pulse">Loading Idyll Productions...</p>
+        <p className="text-slate-400 text-sm mt-2">Connecting to database...</p>
       </div>
     </div>
   );
@@ -812,6 +987,8 @@ const App: React.FC = () => {
             onUpdatePayout={updatePayout}
             onAddChatMessage={addChatMessage}
             onAddNotification={addNotification}
+            onRemoveUser={removeUser}
+            onChangeUserRole={changeUserRole}
           />;
         }
         return <EditorDashboard 
@@ -833,7 +1010,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen text-slate-100 font-sans selection:bg-blue-500/20 relative">
+      <AnimatedLiquidBackground />
       <div className="relative z-10">
         <CustomCursor />
         {renderPage()}

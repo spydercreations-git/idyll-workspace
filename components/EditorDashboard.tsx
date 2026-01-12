@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, CheckSquare, Calendar, MessageSquare, DollarSign, LogOut } from 'lucide-react';
 import { UserProfile } from '../types';
+import { useTiltEffect } from '../hooks/useTiltEffect';
 
 interface EditorDashboardProps {
   user: UserProfile;
@@ -46,6 +47,11 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
     alert('Role switching requires proper authentication in production');
   };
 
+  const profileCardTiltRef = useTiltEffect({ maxTilt: 4, scale: 1.01 });
+  const taskCard1TiltRef = useTiltEffect({ maxTilt: 3, scale: 1.01 });
+  const taskCard2TiltRef = useTiltEffect({ maxTilt: 3, scale: 1.01 });
+  const taskCard3TiltRef = useTiltEffect({ maxTilt: 3, scale: 1.01 });
+
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (profileData.newPassword && profileData.newPassword !== profileData.confirmPassword) {
@@ -88,54 +94,57 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   };
 
   const renderProfile = () => (
-    <div className="space-y-6 bounce-in">
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-6">Profile Settings</h2>
+    <div className="space-y-6 animate-slide-up">
+      <div 
+        ref={profileCardTiltRef as any}
+        className="glass-card rounded-2xl p-8 tilt-card animate-fade-scale animate-delay-100"
+      >
+        <h3 className="text-2xl font-semibold text-white mb-6">Profile Settings</h3>
         <form onSubmit={handleProfileUpdate}>
           <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium mb-2">Username</label>
+              <label className="block text-slate-300 text-sm font-medium mb-2">Username</label>
               <input
                 type="text"
                 value={profileData.username}
                 onChange={(e) => setProfileData({...profileData, username: e.target.value})}
-                className="w-full input"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-slate-300 text-sm font-medium mb-2">Email</label>
               <input
                 type="email"
                 value={profileData.email}
                 onChange={(e) => setProfileData({...profileData, email: e.target.value})}
-                className="w-full input"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                 disabled
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">New Password</label>
+              <label className="block text-slate-300 text-sm font-medium mb-2">New Password</label>
               <input
                 type="password"
                 value={profileData.newPassword}
                 onChange={(e) => setProfileData({...profileData, newPassword: e.target.value})}
                 placeholder="Leave blank to keep current"
-                className="w-full input"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Confirm Password</label>
+              <label className="block text-slate-300 text-sm font-medium mb-2">Confirm Password</label>
               <input
                 type="password"
                 value={profileData.confirmPassword}
                 onChange={(e) => setProfileData({...profileData, confirmPassword: e.target.value})}
                 placeholder="Confirm new password"
-                className="w-full input"
+                className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
               />
             </div>
           </div>
           <button 
             type="submit"
-            className="mt-6 btn-primary"
+            className="mt-6 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
           >
             Update Profile
           </button>
@@ -149,83 +158,138 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   };
 
   const renderTasks = () => (
-    <div className="space-y-6 bounce-in">
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-6">Task Management</h2>
+    <div className="space-y-6 animate-slide-up">
+      <div className="glass-card rounded-2xl p-8 animate-fade-scale">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-white">📋 My Tasks</h3>
+          <button 
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white font-medium rounded-xl transition-colors btn-focus"
+          >
+            🔄 Refresh
+          </button>
+        </div>
         {tasks.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No tasks assigned yet</p>
-            <p className="text-gray-500 text-sm mt-2">Your assigned tasks will appear here</p>
+            <p className="text-slate-400 text-lg">No tasks assigned yet</p>
+            <p className="text-slate-500 text-sm mt-2">Your assigned tasks will appear here</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {tasks.map((task: any, index: number) => (
-              <div 
-                key={task.id} 
-                className="card p-6 hover-lift"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-white">{task.name}</h4>
-                    <p className="text-gray-400 text-sm">Task #{task.task_number}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-gray-300 text-sm">Deadline: {new Date(task.deadline).toLocaleDateString()}</p>
-                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                      task.status === 'completed' ? 'status-completed' :
-                      task.status === 'in-progress' ? 'status-progress' :
-                      'status-pending'
-                    }`}>
-                      {task.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-gray-400 text-xs font-medium mb-1">Raw File</label>
-                    {task.raw_file ? (
-                      <a href={task.raw_file} className="accent-blue hover:underline text-sm break-all">
-                        {task.raw_file}
-                      </a>
-                    ) : (
-                      <p className="text-gray-500 text-sm">No raw file provided</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-400 text-xs font-medium mb-1">Edited File</label>
-                    {task.edited_file ? (
-                      <a href={task.edited_file} className="accent-green hover:underline text-sm break-all">
-                        {task.edited_file}
-                      </a>
-                    ) : (
-                      <input
-                        type="url"
-                        placeholder="Upload edited file link"
-                        className="w-full input text-sm"
-                        onBlur={(e) => {
-                          if (e.target.value) {
-                            handleTaskUpdate(task.id.toString(), 'edited_file', e.target.value);
-                            handleTaskUpdate(task.id.toString(), 'status', 'completed');
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
-                  <div>
-                    <label className="block text-gray-400 text-xs font-medium mb-1">Status</label>
-                    <select
-                      value={task.status}
-                      onChange={(e) => handleTaskUpdate(task.id.toString(), 'status', e.target.value)}
-                      className="w-full input text-sm"
-                    >
-                      <option value="pending">Pending</option>
-                      <option value="in-progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                </div>
+          <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
+            {/* Notion-Style Header */}
+            <div className="bg-slate-800/50 border-b border-slate-700/50 px-4 py-3">
+              <div className="grid grid-cols-12 gap-4 text-xs font-bold text-slate-400 uppercase tracking-wider">
+                <div className="col-span-1">Task #</div>
+                <div className="col-span-4">Name</div>
+                <div className="col-span-2">Status</div>
+                <div className="col-span-2">Deadline</div>
+                <div className="col-span-1">Raw File</div>
+                <div className="col-span-2">Edited File</div>
               </div>
-            ))}
+            </div>
+
+            {/* Task Rows */}
+            <div className="divide-y divide-slate-700/30">
+              {tasks.map((task: any, index: number) => (
+                <div key={task.id} className={`px-4 py-4 hover:bg-slate-800/20 transition-colors tilt-card animate-slide-up animate-delay-${(index + 1) * 100}`}>
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    {/* Task Number */}
+                    <div className="col-span-1">
+                      <span className="text-slate-400 text-sm font-mono">
+                        {task.task_number || `T${String(index + 1).padStart(3, '0')}`}
+                      </span>
+                    </div>
+
+                    {/* Task Name */}
+                    <div className="col-span-4">
+                      <div className="text-white text-sm font-medium">
+                        {task.name}
+                      </div>
+                      <div className="text-slate-400 text-xs mt-1">
+                        Priority: <span className={`${
+                          task.priority === 'high' ? 'text-red-400' :
+                          task.priority === 'medium' ? 'text-yellow-400' :
+                          'text-green-400'
+                        }`}>
+                          {task.priority === 'high' ? '🔴 High' : 
+                           task.priority === 'medium' ? '🟡 Medium' : '🟢 Low'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Status */}
+                    <div className="col-span-2">
+                      <select
+                        value={task.status || 'pending'}
+                        onChange={(e) => handleTaskUpdate(task.id.toString(), 'status', e.target.value)}
+                        className="w-full bg-transparent text-sm border-none outline-none focus:bg-slate-800/50 rounded px-2 py-1 transition-colors btn-focus"
+                      >
+                        <option value="pending" className="bg-slate-800">⏳ Pending</option>
+                        <option value="in-progress" className="bg-slate-800">🔄 In Progress</option>
+                        <option value="completed" className="bg-slate-800">✅ Completed</option>
+                      </select>
+                    </div>
+
+                    {/* Deadline */}
+                    <div className="col-span-2">
+                      <div className="text-slate-300 text-sm">
+                        {task.deadline ? new Date(task.deadline).toLocaleDateString() : 'No deadline'}
+                      </div>
+                      <div className={`text-xs mt-1 ${
+                        task.deadline && new Date(task.deadline) < new Date() ? 'text-red-400' : 'text-slate-500'
+                      }`}>
+                        {task.deadline && new Date(task.deadline) < new Date() ? '⚠️ Overdue' : ''}
+                      </div>
+                    </div>
+
+                    {/* Raw File */}
+                    <div className="col-span-1">
+                      {task.raw_file ? (
+                        <a 
+                          href={task.raw_file} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-400 hover:text-blue-300 text-sm transition-colors"
+                        >
+                          📎 View
+                        </a>
+                      ) : (
+                        <span className="text-slate-500 text-sm">No file</span>
+                      )}
+                    </div>
+
+                    {/* Edited File */}
+                    <div className="col-span-2">
+                      {task.edited_file ? (
+                        <a 
+                          href={task.edited_file} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-green-400 hover:text-green-300 text-sm transition-colors"
+                        >
+                          ✅ Completed
+                        </a>
+                      ) : (
+                        <input
+                          type="url"
+                          placeholder="Upload edited file..."
+                          className="w-full bg-transparent text-slate-400 text-sm border-none outline-none focus:bg-slate-800/50 rounded px-2 py-1 transition-colors btn-focus placeholder-slate-500"
+                          onBlur={(e) => {
+                            if (e.target.value) {
+                              handleTaskUpdate(task.id.toString(), 'edited_file', e.target.value);
+                              handleTaskUpdate(task.id.toString(), 'status', 'completed');
+                            }
+                          }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -233,25 +297,25 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   );
 
   const renderMeetings = () => (
-    <div className="space-y-6 bounce-in">
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-6">Meeting Calendar</h2>
+    <div className="space-y-6 animate-slide-up">
+      <div className="glass-card rounded-2xl p-8 animate-fade-scale">
+        <h3 className="text-2xl font-semibold text-white mb-6">Meeting Calendar</h3>
         {meetings.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No meetings scheduled</p>
-            <p className="text-gray-500 text-sm mt-2">Your scheduled meetings will appear here</p>
+            <p className="text-slate-400 text-lg">No meetings scheduled</p>
+            <p className="text-slate-500 text-sm mt-2">Your scheduled meetings will appear here</p>
           </div>
         ) : (
           <div className="grid gap-4">
             {meetings.map((meeting: any, index: number) => (
-              <div key={meeting.id} className="card p-6 hover-lift">
+              <div key={meeting.id} className={`glass-panel rounded-xl p-6 border border-slate-700/50 animate-slide-up animate-delay-${(index + 1) * 100}`}>
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-lg font-medium text-white">{meeting.title}</h4>
-                    <p className="text-gray-400 text-sm">{new Date(meeting.date).toLocaleDateString()} at {meeting.time}</p>
-                    <p className="text-gray-500 text-xs">Attendees: {Array.isArray(meeting.attendees) ? meeting.attendees.join(', ') : meeting.attendees}</p>
+                    <p className="text-slate-400 text-sm">{new Date(meeting.date).toLocaleDateString()} at {meeting.time}</p>
+                    <p className="text-slate-500 text-xs">Attendees: {Array.isArray(meeting.attendees) ? meeting.attendees.join(', ') : meeting.attendees}</p>
                   </div>
-                  <button className="btn-primary">
+                  <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors btn-focus">
                     Join
                   </button>
                 </div>
@@ -264,40 +328,40 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   );
 
   const renderNotes = () => (
-    <div className="space-y-6 bounce-in">
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-6">Live Chat with Moderators</h2>
-        <div className="card p-4 h-96 mb-4 overflow-y-auto">
+    <div className="space-y-6 animate-slide-up">
+      <div className="glass-card rounded-2xl p-8 animate-fade-scale">
+        <h3 className="text-2xl font-semibold text-white mb-6">Live Chat with Moderators</h3>
+        <div className="glass-panel rounded-xl p-4 h-96 mb-4 overflow-y-auto">
           <div className="space-y-4">
             {chatMessages.map((message: any) => (
-              <div key={message.id} className="flex items-start gap-3">
+              <div key={message.id} className="flex items-start gap-3 animate-slide-up animate-delay-100">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium ${
                   message.type === 'system' ? 'bg-gray-600' : 
-                  message.sender === user.displayName ? 'bg-gray-600' : 'bg-blue-600'
+                  message.sender === user.displayName ? 'bg-slate-600' : 'bg-blue-600'
                 }`}>
                   {message.sender.charAt(0).toUpperCase()}
                 </div>
                 <div className={message.sender === user.displayName ? 'ml-auto text-right' : ''}>
-                  <p className="text-gray-300 text-sm">
+                  <p className="text-slate-300 text-sm">
                     <span className="font-medium">{message.sender === user.displayName ? 'You' : message.sender}:</span> {message.message}
                   </p>
-                  <p className="text-gray-500 text-xs">{new Date(message.timestamp).toLocaleTimeString()}</p>
+                  <p className="text-slate-500 text-xs">{new Date(message.timestamp).toLocaleTimeString()}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <form onSubmit={handleSendMessage} className="flex gap-3">
+        <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
             placeholder="Type your message..."
-            className="flex-1 input"
+            className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
           />
           <button 
             type="submit"
-            className="btn-primary"
+            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
           >
             Send
           </button>
@@ -307,71 +371,71 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   );
 
   const renderPayout = () => (
-    <div className="space-y-6 bounce-in">
-      <div className="card p-6">
-        <h2 className="text-xl font-semibold mb-6">Payout Management</h2>
+    <div className="space-y-6 animate-slide-up">
+      <div className="glass-card rounded-2xl p-8 animate-fade-scale">
+        <h3 className="text-2xl font-semibold text-white mb-6">Payout Management</h3>
         
         {showPayoutForm && (
-          <div className="card p-6 mb-6 border border-blue-500">
-            <h4 className="text-lg font-medium mb-4">Request New Payout</h4>
+          <div className="glass-panel rounded-xl p-6 border border-slate-700/50 mb-6">
+            <h4 className="text-lg font-medium text-white mb-4">Request New Payout</h4>
             <form onSubmit={handleCreatePayout} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Project Name</label>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">Project Name</label>
                   <input
                     type="text"
                     value={newPayout.project}
                     onChange={(e) => setNewPayout({...newPayout, project: e.target.value})}
-                    className="w-full input"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                     placeholder="Enter project name"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">Amount ($)</label>
+                  <label className="block text-slate-300 text-sm font-medium mb-2">Amount ($)</label>
                   <input
                     type="number"
                     value={newPayout.amount}
                     onChange={(e) => setNewPayout({...newPayout, amount: e.target.value})}
-                    className="w-full input"
+                    className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                     placeholder="Enter amount"
                     required
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Edited File Link</label>
+                <label className="block text-slate-300 text-sm font-medium mb-2">Edited File Link</label>
                 <input
                   type="url"
                   value={newPayout.editedLink}
                   onChange={(e) => setNewPayout({...newPayout, editedLink: e.target.value})}
-                  className="w-full input"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                   placeholder="https://drive.google.com/..."
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-2">Payment Method</label>
+                <label className="block text-slate-300 text-sm font-medium mb-2">Payment Method</label>
                 <input
                   type="text"
                   value={newPayout.paymentMethod}
                   onChange={(e) => setNewPayout({...newPayout, paymentMethod: e.target.value})}
-                  className="w-full input"
+                  className="w-full px-4 py-3 bg-slate-700/50 border border-slate-600/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
                   placeholder="PayPal - your@email.com"
                   required
                 />
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 <button
                   type="submit"
-                  className="btn-success"
+                  className="px-6 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-500 transition-colors btn-focus"
                 >
                   Submit Request
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowPayoutForm(false)}
-                  className="btn-secondary"
+                  className="px-6 py-3 bg-slate-700 text-slate-300 font-medium rounded-xl hover:bg-slate-600 transition-colors btn-focus"
                 >
                   Cancel
                 </button>
@@ -382,38 +446,38 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
 
         {payouts.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-400 text-lg">No payout requests yet</p>
-            <p className="text-gray-500 text-sm mt-2">Complete tasks to request payouts</p>
+            <p className="text-slate-400 text-lg">No payout requests yet</p>
+            <p className="text-slate-500 text-sm mt-2">Complete tasks to request payouts</p>
           </div>
         ) : (
           <div className="space-y-4">
             {payouts.map((payout: any, index: number) => (
-              <div key={payout.id} className="card p-6 hover-lift">
+              <div key={payout.id} className={`glass-panel rounded-xl p-6 border border-slate-700/50 animate-slide-up animate-delay-${(index + 1) * 100}`}>
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h4 className="text-lg font-medium text-white">{payout.project}</h4>
-                    <p className="text-gray-400 text-sm">Amount: ${payout.amount}</p>
-                    <p className="text-gray-500 text-xs">Requested: {new Date(payout.requested_at).toLocaleDateString()}</p>
+                    <p className="text-slate-400 text-sm">Amount: ${payout.amount}</p>
+                    <p className="text-slate-500 text-xs">Requested: {new Date(payout.requested_at).toLocaleDateString()}</p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    payout.status === 'paid' ? 'status-completed' :
-                    payout.status === 'approved' ? 'status-progress' :
+                    payout.status === 'paid' ? 'bg-green-900/50 text-green-400' :
+                    payout.status === 'approved' ? 'bg-blue-900/50 text-blue-400' :
                     payout.status === 'rejected' ? 'bg-red-900/50 text-red-400' :
-                    'status-pending'
+                    'bg-amber-900/50 text-amber-400'
                   }`}>
                     {payout.status}
                   </span>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-400 text-xs font-medium mb-1">Edited File Link</label>
-                    <a href={payout.edited_link} className="accent-blue hover:underline text-sm break-all">
+                    <label className="block text-slate-400 text-xs font-medium mb-1">Edited File Link</label>
+                    <a href={payout.edited_link} className="text-blue-400 hover:text-blue-300 text-sm break-all transition-colors">
                       {payout.edited_link}
                     </a>
                   </div>
                   <div>
-                    <label className="block text-gray-400 text-xs font-medium mb-1">Payment Method</label>
-                    <p className="text-gray-300 text-sm">{payout.payment_method}</p>
+                    <label className="block text-slate-400 text-xs font-medium mb-1">Payment Method</label>
+                    <p className="text-slate-300 text-sm">{payout.payment_method}</p>
                   </div>
                 </div>
               </div>
@@ -423,7 +487,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
         
         <button 
           onClick={() => setShowPayoutForm(true)}
-          className="mt-6 btn-success"
+          className="mt-6 px-6 py-3 bg-green-600 text-white font-medium rounded-xl hover:bg-green-500 transition-colors btn-focus"
         >
           Request New Payout
         </button>
@@ -432,54 +496,49 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-black text-white pb-20 md:pb-0">
+    <div className="min-h-screen text-slate-100 font-sans selection:bg-blue-500/20 pb-24 md:pb-0">
       {/* Sidebar */}
-      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-64 sidebar flex-col py-6 z-50">
-        <div className="flex items-center gap-3 px-6 mb-8">
+      <nav className="hidden md:flex fixed left-0 top-0 bottom-0 w-24 bg-slate-900/50 backdrop-blur-xl border-r border-slate-800/50 flex-col items-center py-10 z-50 animate-slide-down">
+        <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-12 glow-blue animate-fade-scale animate-delay-100">
           <img 
             src="/logo-white.png" 
             alt="Idyll Productions" 
-            className="w-8 h-8 object-contain"
+            className="w-full h-full object-contain"
           />
-          <span className="font-semibold text-lg">Idyll Productions</span>
         </div>
         
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col gap-6">
           {[
             { id: 'profile', icon: User, label: 'Profile' },
             { id: 'tasks', icon: CheckSquare, label: 'Tasks' },
             { id: 'meetings', icon: Calendar, label: 'Meetings' },
             { id: 'notes', icon: MessageSquare, label: 'Notes' },
             { id: 'payout', icon: DollarSign, label: 'Payout' },
-          ].map((item) => (
-            <div
+          ].map((item, index) => (
+            <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`sidebar-item ${activeTab === item.id ? 'active' : ''}`}
+              className={`p-4 rounded-xl transition-all group relative btn-focus animate-slide-down animate-delay-${(index + 2) * 100} ${
+                activeTab === item.id 
+                  ? 'bg-blue-600 text-white glow-blue scale-110' 
+                  : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'
+              }`}
             >
-              <item.icon size={20} />
-              <span className="font-medium">{item.label}</span>
-            </div>
+              <item.icon size={22} strokeWidth={1.5} />
+              <span className="absolute left-full ml-4 px-3 py-1 glass-panel text-white text-xs font-medium rounded-lg opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
+                {item.label}
+              </span>
+            </button>
           ))}
         </div>
 
-        <div className="px-6 pt-4 border-t border-gray-800">
-          <div className="flex items-center gap-3 mb-4">
-            <img src={user.photoURL} alt="profile" className="w-8 h-8 rounded-full" />
-            <div>
-              <div className="font-medium text-sm">{user.displayName}</div>
-              <div className="text-xs text-gray-400 capitalize">{user.role}</div>
-            </div>
-          </div>
-          <button onClick={onLogout} className="w-full btn-secondary text-left flex items-center gap-2">
-            <LogOut size={16} />
-            <span>Logout</span>
-          </button>
-        </div>
+        <button onClick={onLogout} className="p-4 text-slate-600 hover:text-rose-500 transition-colors btn-focus rounded-xl animate-slide-down animate-delay-700">
+          <LogOut size={22} strokeWidth={1.5} />
+        </button>
       </nav>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-gray-900 border-t border-gray-800 flex items-center justify-around px-4 z-50">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-20 bg-slate-900/80 backdrop-blur-2xl border-t border-slate-800/50 flex items-center justify-around px-4 z-[60] pb-2">
         {[
           { id: 'profile', icon: User },
           { id: 'tasks', icon: CheckSquare },
@@ -490,35 +549,44 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id)}
-            className={`p-3 rounded-lg transition-all ${
-              activeTab === item.id ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'
+            className={`p-3 rounded-xl transition-all btn-focus ${
+              activeTab === item.id ? 'bg-blue-600 text-white glow-blue' : 'text-slate-500'
             }`}
           >
-            <item.icon size={20} />
+            <item.icon size={24} strokeWidth={1.5} />
           </button>
         ))}
       </nav>
 
       {/* Main Content */}
-      <main className="md:pl-64 min-h-screen">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <main className="md:pl-24 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-12">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8 card p-6">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-semibold">Editor Dashboard</h1>
-              <span className="px-3 py-1 bg-blue-600 text-white text-sm font-medium rounded-full">
-                {user.role}
-              </span>
+          <div className="flex items-center justify-between mb-8 md:mb-12 glass-panel p-4 rounded-2xl animate-slide-down">
+            <div className="flex items-center gap-4 md:gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center overflow-hidden border border-slate-700">
+                  <img src={user.photoURL} alt="profile" className="w-full h-full object-cover" />
+                </div>
+                <span className="hidden sm:block text-xs font-medium text-slate-400">{user.displayName}</span>
+              </div>
+              <div className="h-4 w-px bg-slate-800"></div>
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+                <span className="text-xs font-medium text-blue-500/80">Editor Dashboard</span>
+              </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                <span className="text-sm text-gray-400">Online</span>
+              <button onClick={onLogout} className="md:hidden text-slate-600 btn-focus rounded-lg p-2">
+                <LogOut size={20} strokeWidth={1.5} />
+              </button>
+              <div className="hidden md:block px-4 py-1.5 glass-panel rounded-full">
+                <span className="text-xs font-medium text-slate-500">Idyll Productions</span>
               </div>
             </div>
           </div>
 
-          <div className="bounce-in">
+          <div>
             {activeTab === 'profile' && renderProfile()}
             {activeTab === 'tasks' && renderTasks()}
             {activeTab === 'meetings' && renderMeetings()}
