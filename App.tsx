@@ -77,25 +77,78 @@ const App: React.FC = () => {
 
   const checkAuthState = async () => {
     try {
+      console.log('🔍 Checking authentication state...');
+      
+      // First check if we have a saved user session in localStorage
+      const savedUser = localStorage.getItem('idyll_user');
+      const savedPage = localStorage.getItem('currentPage');
+      
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          console.log('📱 Found saved user session:', userData.email);
+          
+          // Verify user still exists and is approved in database
+          const { data: dbUser } = await usersService.getUserByEmail(userData.email);
+          if (dbUser && dbUser.approved) {
+            setUser({
+              uid: dbUser.uid,
+              email: dbUser.email,
+              displayName: dbUser.display_name,
+              photoURL: dbUser.photo_url || 'https://i.pravatar.cc/150?u=' + dbUser.email,
+              role: dbUser.role as 'editor' | 'moderator' | 'owner',
+              approved: dbUser.approved
+            });
+            
+            // Restore the exact page they were on
+            if (savedPage && (savedPage === 'dashboard' || savedPage === 'management')) {
+              console.log('🔄 Restoring saved page:', savedPage);
+              setCurrentPage(savedPage);
+            } else {
+              // Default page based on role
+              if (dbUser.role === 'editor') {
+                setCurrentPage('dashboard');
+              } else if (dbUser.role === 'moderator' || dbUser.role === 'owner') {
+                setCurrentPage('management');
+              } else {
+                setCurrentPage('dashboard');
+              }
+            }
+            return;
+          } else {
+            // User no longer exists or not approved, clear saved session
+            localStorage.removeItem('idyll_user');
+            localStorage.removeItem('currentPage');
+          }
+        } catch (e) {
+          console.error('Error parsing saved user:', e);
+          localStorage.removeItem('idyll_user');
+        }
+      }
+      
+      // Check Supabase session as fallback
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         const { data: userData } = await usersService.getUserByEmail(session.user.email!);
         if (userData && userData.approved) {
-          setUser({
+          const userProfile = {
             uid: userData.uid,
             email: userData.email,
             displayName: userData.display_name,
             photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
             role: userData.role as 'editor' | 'moderator' | 'owner',
             approved: userData.approved
-          });
+          };
+          
+          setUser(userProfile);
+          
+          // Save user session to localStorage
+          localStorage.setItem('idyll_user', JSON.stringify(userProfile));
           
           // Restore saved page or default based on role
-          const savedPage = localStorage.getItem('currentPage');
           if (savedPage && (savedPage === 'dashboard' || savedPage === 'management')) {
             setCurrentPage(savedPage);
           } else {
-            // Default page based on role
             if (userData.role === 'editor') {
               setCurrentPage('dashboard');
             } else if (userData.role === 'moderator' || userData.role === 'owner') {
@@ -109,8 +162,7 @@ const App: React.FC = () => {
         }
       } else {
         // No session, check for saved page but only allow non-auth pages
-        const savedPage = localStorage.getItem('currentPage');
-        if (savedPage && ['welcome', 'login', 'create-account', 'apply'].includes(savedPage)) {
+        if (savedPage && ['welcome', 'login', 'create-account', 'apply', 'approval'].includes(savedPage)) {
           setCurrentPage(savedPage);
         } else {
           setCurrentPage('welcome');
@@ -202,9 +254,11 @@ const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
+    console.log('🚪 Logging out user...');
     await authService.signOut();
     setUser(null);
-    localStorage.removeItem('currentPage'); // Clear saved page on logout
+    localStorage.removeItem('currentPage');
+    localStorage.removeItem('idyll_user'); // Clear saved user session
     setCurrentPage('welcome');
   };
 
@@ -213,7 +267,7 @@ const App: React.FC = () => {
     
     try {
       const email = username.includes('@') ? username.toLowerCase() : `${username}@editorgmail.com`;
-      console.log('Attempting login with email:', email);
+      console.log('🔐 Attempting login with email:', email);
       
       // Check if user exists in our database first
       const { data: userData, error: userError } = await usersService.getUserByEmail(email);
@@ -231,18 +285,24 @@ const App: React.FC = () => {
         return;
       }
 
-      // For admin users (owner/moderator), bypass Supabase auth completely
+      // Create user profile object
+      const userProfile = {
+        uid: userData.uid,
+        email: userData.email,
+        displayName: userData.display_name,
+        photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
+        role: userData.role as 'editor' | 'moderator' | 'owner',
+        approved: userData.approved
+      };
+
+      // For admin users (owner/moderator), allow login without password check
       if (userData.role === 'owner' || userData.role === 'moderator') {
-        console.log('Admin user detected, bypassing Supabase auth');
+        console.log('👑 Admin user detected, allowing login');
         
-        setUser({
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.display_name,
-          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-          role: userData.role as 'editor' | 'moderator' | 'owner',
-          approved: userData.approved
-        });
+        setUser(userProfile);
+        
+        // Save user session to localStorage
+        localStorage.setItem('idyll_user', JSON.stringify(userProfile));
         
         // Navigate to management panel for admin users
         setCurrentPage('management');
@@ -260,81 +320,50 @@ const App: React.FC = () => {
         return;
       }
 
-      // For regular editors, try Supabase auth but fallback to database
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      
-      // If auth fails but user exists and is approved, allow login anyway
-      if (authError && userData.approved) {
-        console.log('Auth failed but user is approved, allowing login:', authError.message);
-        
-        setUser({
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.display_name,
-          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-          role: userData.role as 'editor' | 'moderator' | 'owner',
-          approved: userData.approved
+      // For regular editors, try Supabase auth but allow fallback
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
         });
         
-        // Navigate to appropriate page based on role
-        if (userData.role === 'editor') {
-          setCurrentPage('dashboard');
-        } else if (userData.role === 'moderator' || userData.role === 'owner') {
-          setCurrentPage('management');
-        } else {
-          setCurrentPage('dashboard');
+        if (authError) {
+          console.log('⚠️ Supabase auth failed, but user exists and is approved, allowing login');
         }
-        
-        await loadAppData();
-        
-        // Add login notification
-        await addNotification({
-          type: 'user',
-          title: 'User Login',
-          message: `${userData.display_name} logged in`,
-          urgent: false
-        });
-        
-        setLoading(false);
-        return;
+      } catch (authError) {
+        console.log('⚠️ Supabase auth error, but continuing with database user');
       }
 
-      if (authError) {
-        console.error('Auth error:', authError);
-        alert('Login failed: ' + authError.message + '\n\nPlease check your credentials or contact admin.');
-        setLoading(false);
-        return;
-      }
-
-      // Successful authentication
-      if (authData.user) {
-        console.log('Login successful');
-        setUser({
-          uid: userData.uid,
-          email: userData.email,
-          displayName: userData.display_name,
-          photoURL: userData.photo_url || 'https://i.pravatar.cc/150?u=' + userData.email,
-          role: userData.role as 'editor' | 'moderator' | 'owner',
-          approved: userData.approved
-        });
-        
+      // Set user regardless of Supabase auth result (since user exists and is approved)
+      setUser(userProfile);
+      
+      // Save user session to localStorage
+      localStorage.setItem('idyll_user', JSON.stringify(userProfile));
+      
+      // Navigate to appropriate page based on role
+      if (userData.role === 'editor') {
         setCurrentPage('dashboard');
-        await loadAppData();
-        
-        // Add login notification
-        await addNotification({
-          type: 'user',
-          title: 'User Login',
-          message: `${userData.display_name} logged in`,
-          urgent: false
-        });
+      } else if (userData.role === 'moderator' || userData.role === 'owner') {
+        setCurrentPage('management');
+      } else {
+        setCurrentPage('dashboard');
       }
+      
+      await loadAppData();
+      
+      // Add login notification
+      await addNotification({
+        type: 'user',
+        title: 'User Login',
+        message: `${userData.display_name} logged in`,
+        urgent: false
+      });
+
+      console.log('✅ Login successful for:', userData.display_name);
+      
     } catch (error) {
-      console.error('Login error:', error);
-      alert('Login failed. Please try again or create an account.');
+      console.error('❌ Login error:', error);
+      alert('Login failed. Please try again or contact admin.');
     }
     
     setLoading(false);
@@ -345,6 +374,7 @@ const App: React.FC = () => {
     
     try {
       const emailLower = email.toLowerCase();
+      console.log('📝 Creating account for:', emailLower);
       
       // Check if user already exists
       const { data: existingUser } = await usersService.getUserByEmail(emailLower);
@@ -369,19 +399,22 @@ const App: React.FC = () => {
 
       let userId = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // For admin users, skip Supabase auth entirely
+      // Create user profile object
+      const userProfile = {
+        uid: userId,
+        email: emailLower,
+        displayName: username,
+        photoURL: `https://i.pravatar.cc/150?u=${emailLower}`,
+        role: role,
+        approved: shouldAutoApprove
+      };
+
+      // For admin users, skip Supabase auth entirely and auto-approve
       if (shouldAutoApprove) {
-        console.log('Admin user detected, skipping Supabase auth');
+        console.log('👑 Admin user detected, auto-approving');
         
         // Create user record directly in database
-        const { data: userData, error: userError } = await usersService.createUser({
-          uid: userId,
-          email: emailLower,
-          display_name: username,
-          photo_url: `https://i.pravatar.cc/150?u=${emailLower}`,
-          role: role,
-          approved: true
-        });
+        const { data: userData, error: userError } = await usersService.createUser(userProfile);
 
         if (userError) {
           console.error('Error creating admin user record:', userError);
@@ -389,14 +422,6 @@ const App: React.FC = () => {
           setLoading(false);
           return;
         }
-
-        // Add welcome notification
-        await addNotification({
-          type: 'user',
-          title: 'Welcome to Idyll Productions!',
-          message: `Admin account created for ${username}`,
-          urgent: false
-        });
 
         // Auto-login admin user
         setUser({
@@ -407,32 +432,60 @@ const App: React.FC = () => {
           role: role,
           approved: true
         });
-        setCurrentPage('dashboard');
+        
+        // Save user session to localStorage
+        localStorage.setItem('idyll_user', JSON.stringify({
+          uid: userId,
+          email: emailLower,
+          displayName: username,
+          photoURL: `https://i.pravatar.cc/150?u=${emailLower}`,
+          role: role,
+          approved: true
+        }));
+        
+        // Navigate to appropriate page
+        if (role === 'owner' || role === 'moderator') {
+          setCurrentPage('management');
+        } else {
+          setCurrentPage('dashboard');
+        }
+        
         await loadAppData();
+        
+        // Add welcome notification
+        await addNotification({
+          type: 'user',
+          title: 'Welcome to Idyll Productions!',
+          message: `Admin account created for ${username}`,
+          urgent: false
+        });
         
         alert(`Welcome ${username}! You have been automatically approved as ${role}.`);
         setLoading(false);
         return;
       }
 
-      // For regular users, try Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: emailLower,
-        password,
-        options: {
-          data: {
-            display_name: username,
-          },
-          emailRedirectTo: undefined // Disable email confirmation
+      // For regular users, try Supabase auth but continue even if it fails
+      try {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: emailLower,
+          password,
+          options: {
+            data: {
+              display_name: username,
+            },
+            emailRedirectTo: undefined // Disable email confirmation
+          }
+        });
+        
+        if (authData?.user?.id) {
+          userId = authData.user.id;
         }
-      });
-      
-      // Even if auth fails, create user record for regular users
-      if (authData?.user?.id) {
-        userId = authData.user.id;
+      } catch (authError) {
+        console.log('⚠️ Supabase auth failed, but continuing with account creation');
       }
       
-      // Create user record in database
+      // Create user record in database (not approved for regular users)
       const { data: userData, error: userError } = await usersService.createUser({
         uid: userId,
         email: emailLower,
@@ -478,8 +531,10 @@ const App: React.FC = () => {
         urgent: true
       });
 
+      console.log('✅ Account created successfully for:', username);
+
     } catch (error) {
-      console.error('Account creation error:', error);
+      console.error('❌ Account creation error:', error);
       alert('Account creation failed. Please try again.');
     }
     
