@@ -108,7 +108,7 @@ export const notionDatabase = {
     try {
       const properties = {
         'Task Number': {
-          number: taskData.task_number ? parseInt(taskData.task_number.replace('T', '')) : Date.now()
+          number: Date.now() // Use timestamp for unique task numbers
         },
         'Name': {
           rich_text: [{ text: { content: taskData.name || '' } }]
@@ -173,6 +173,22 @@ export const notionDatabase = {
     } catch (error) {
       console.error('Error updating task:', error);
       return { data: null, error: error.message };
+    }
+  },
+
+  async deleteTask(taskId: string) {
+    if (!TASKS_DATABASE_ID) return { error: 'Tasks database not configured' };
+    
+    try {
+      await notion.pages.update({
+        page_id: taskId,
+        archived: true
+      });
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      return { error: error.message };
     }
   },
 
@@ -338,6 +354,22 @@ export const notionDatabase = {
     }
   },
 
+  async deletePayout(payoutId: string) {
+    if (!PAYOUTS_DATABASE_ID) return { error: 'Payouts database not configured' };
+    
+    try {
+      await notion.pages.update({
+        page_id: payoutId,
+        archived: true
+      });
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting payout:', error);
+      return { error: error.message };
+    }
+  },
+
   // APPLICATIONS
   async getApplications() {
     if (!APPLICATIONS_DATABASE_ID) return { data: [], error: 'Applications database not configured' };
@@ -424,6 +456,22 @@ export const notionDatabase = {
     }
   },
 
+  async deleteApplication(applicationId: string) {
+    if (!APPLICATIONS_DATABASE_ID) return { error: 'Applications database not configured' };
+    
+    try {
+      await notion.pages.update({
+        page_id: applicationId,
+        archived: true
+      });
+
+      return { error: null };
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      return { error: error.message };
+    }
+  },
+
   // NOTIFICATIONS
   async getNotifications() {
     if (!NOTIFICATIONS_DATABASE_ID) return { data: [], error: 'Notifications database not configured' };
@@ -481,19 +529,21 @@ export const notionDatabase = {
   startPolling(callback: (type: string, data: any) => void) {
     console.log('🔄 Starting Notion polling for real-time updates...');
     
+    // Store last check time
+    let lastCheckTime = Date.now();
+    
     setInterval(async () => {
       try {
-        await this.pollForChanges(callback);
+        await this.pollForChanges(callback, lastCheckTime);
+        lastCheckTime = Date.now();
       } catch (error) {
         console.error('❌ Error polling Notion:', error);
       }
-    }, 2000); // Poll every 2 seconds
+    }, 3000); // Poll every 3 seconds for better reliability
   },
 
-  async pollForChanges(callback: (type: string, data: any) => void) {
-    const recentThreshold = Date.now() - 10000; // Last 10 seconds
-    
-    // Poll each database for recent changes (excluding chat - that's in Supabase)
+  async pollForChanges(callback: (type: string, data: any) => void, lastCheckTime: number) {
+    // Poll each database for recent changes
     const databases = [
       { id: TASKS_DATABASE_ID, type: 'tasks', parser: this.parseTaskFromNotion },
       { id: MEETINGS_DATABASE_ID, type: 'meetings', parser: this.parseMeetingFromNotion },
@@ -506,19 +556,30 @@ export const notionDatabase = {
       if (!db.id) continue;
       
       try {
+        // Get all recent items (last 10 items) and check timestamps
         const response = await notion.databases.query({
           database_id: db.id,
-          sorts: [{ property: 'Last edited time', direction: 'descending' }],
-          page_size: 5
+          sorts: [{ property: 'Created time', direction: 'descending' }],
+          page_size: 10
         });
 
+        let hasChanges = false;
         for (const page of response.results) {
-          const lastEditedTime = new Date(page.last_edited_time).getTime();
-          if (lastEditedTime > recentThreshold) {
-            console.log(`🔄 Detected ${db.type} change in Notion`);
-            const parsedData = db.parser.call(this, page);
-            callback(db.type, parsedData);
+          // Check both created and last edited time
+          const createdTime = new Date(page.created_time).getTime();
+          const editedTime = new Date(page.last_edited_time).getTime();
+          
+          if (createdTime > lastCheckTime || editedTime > lastCheckTime) {
+            console.log(`🔄 Detected ${db.type} change in Notion (created: ${new Date(createdTime)}, edited: ${new Date(editedTime)})`);
+            hasChanges = true;
+            break;
           }
+        }
+
+        // If changes detected, trigger callback to refresh all data
+        if (hasChanges) {
+          console.log(`📡 Triggering refresh for ${db.type}`);
+          callback(db.type, { refresh: true });
         }
       } catch (error) {
         console.error(`Error polling ${db.type}:`, error);
@@ -529,9 +590,10 @@ export const notionDatabase = {
   // PARSERS
   parseTaskFromNotion(page: any) {
     const props = page.properties;
+    const taskNumber = this.getPropertyValue(props['Task Number'], 'number');
     return {
       id: page.id,
-      task_number: `T${this.getPropertyValue(props['Task Number'], 'number') || Date.now()}`,
+      task_number: taskNumber ? `T${String(taskNumber).slice(-3).padStart(3, '0')}` : `T${Date.now().toString().slice(-3)}`,
       name: this.getPropertyValue(props['Name'], 'rich_text'),
       assigned_to: this.getPropertyValue(props['Assigned To'], 'email'),
       status: this.getPropertyValue(props['Status'], 'select')?.toLowerCase() || 'pending',

@@ -108,15 +108,37 @@ export const chatService = {
     return { data, error };
   },
 
+  async editMessage(messageId: number, newMessage: string) {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .update({ 
+        message: newMessage, 
+        edited_at: new Date().toISOString(),
+        is_edited: true 
+      })
+      .eq('id', messageId)
+      .select()
+      .single();
+    return { data, error };
+  },
+
+  async deleteMessage(messageId: number) {
+    const { error } = await supabase
+      .from('chat_messages')
+      .delete()
+      .eq('id', messageId);
+    return { error };
+  },
+
   // Real-time subscription for chat - NO REFRESH NEEDED
-  subscribeToMessages(callback: (message: any) => void) {
+  subscribeToMessages(callback: (payload: any) => void) {
     return supabase
       .channel('chat_messages')
       .on('postgres_changes', 
-        { event: 'INSERT', schema: 'public', table: 'chat_messages' },
+        { event: '*', schema: 'public', table: 'chat_messages' },
         (payload) => {
-          console.log('💬 New chat message:', payload.new);
-          callback(payload.new);
+          console.log('💬 Chat change:', payload);
+          callback(payload);
         }
       )
       .subscribe();
