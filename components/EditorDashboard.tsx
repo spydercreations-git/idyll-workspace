@@ -274,10 +274,38 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
             🔄 Refresh
           </button>
         </div>
+
+        {/* Notion Embed for Personal Tasks */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_TASKS_DB || '2cc28c5fb67380b6b9eadeea94981afb'}?embed=true&v=table&filter_by=assigned_to&filter_value=${encodeURIComponent(user.email)}`}
+                width="100%" 
+                height="600px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="My Tasks Database"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">📋 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Your personal tasks filtered by email - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Fallback: Show tasks from database if Notion embed fails */}
         {tasks.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8 bg-slate-800/20 rounded-2xl">
             <p className="text-slate-400 text-lg">No tasks assigned yet</p>
-            <p className="text-slate-500 text-sm mt-2">Your assigned tasks will appear here</p>
+            <p className="text-slate-500 text-sm mt-2">Your assigned tasks will appear in the Notion embed above</p>
           </div>
         ) : (
           <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
@@ -417,12 +445,39 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
         {/* Notion Embed for Meetings */}
         <div className="mb-6">
           <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
-            {profileData.notionDatabaseId ? (
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_MEETINGS_DB || '2e628c5fb67380e58d64eef87105515d'}?embed=true&v=table&filter_by=attendees_emails&filter_value=${encodeURIComponent(user.email)}`}
+                width="100%" 
+                height="500px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="Meeting Calendar"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">📅 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Your meetings filtered by email - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Personal Notion Database Option */}
+        {profileData.notionDatabaseId && (
+          <div className="mb-6">
+            <h4 className="text-lg font-semibold text-white mb-4">📋 Personal Meeting Calendar</h4>
+            <div className="border-2 border-green-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
               <div className="relative">
                 <iframe 
                   src={`https://www.notion.so/embed/${profileData.notionDatabaseId}?embed=true&v=table`}
                   width="100%" 
-                  height="500px"
+                  height="400px"
                   style={{
                     border: 'none',
                     background: 'transparent'
@@ -432,29 +487,15 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                 />
                 <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
-                  <span className="text-xs text-slate-300">📅 Live from Notion</span>
+                  <span className="text-xs text-slate-300">📋 Personal Workspace</span>
                 </div>
               </div>
-            ) : (
-              <div className="p-8 text-center">
-                <p className="text-slate-400 text-lg mb-2">📅 Personal Meeting Calendar</p>
-                <p className="text-slate-500 text-sm mb-4">Connect your personal Notion database in Profile Settings to view your meetings here</p>
-                <button 
-                  onClick={() => setActiveTab('profile')}
-                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
-                >
-                  Go to Profile Settings
-                </button>
-              </div>
-            )}
+            </div>
+            <p className="text-slate-500 text-xs mt-2 text-center">
+              ✅ Connected to your personal Notion workspace
+            </p>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            {profileData.notionDatabaseId ? 
-              '✅ Connected to your personal Notion workspace' : 
-              '⚠️ Add your Notion database ID in Profile Settings to see your personal meetings'
-            }
-          </p>
-        </div>
+        )}
 
         {/* Fallback: Show meetings from database if Notion embed fails */}
         {meetings.length === 0 ? (
@@ -665,10 +706,37 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
           </div>
         )}
 
+        {/* Notion Embed for Personal Payouts */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            <div className="relative">
+              <iframe 
+                src={`https://www.notion.so/embed/${import.meta.env.VITE_NOTION_PAYOUTS_DB || '2e628c5fb67380568bd2ef6a1eb05965'}?embed=true&v=table&filter_by=editor_email&filter_value=${encodeURIComponent(user.email)}`}
+                width="100%" 
+                height="500px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+                title="My Payouts Database"
+                sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+              />
+              <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="text-xs text-slate-300">💰 Live from Notion</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            ✅ Your personal payouts filtered by email - Changes sync in real-time
+          </p>
+        </div>
+
+        {/* Fallback: Show payouts from database if Notion embed fails */}
         {payouts.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="text-center py-8 bg-slate-800/20 rounded-2xl">
             <p className="text-slate-400 text-lg">No payout requests yet</p>
-            <p className="text-slate-500 text-sm mt-2">Complete tasks to request payouts</p>
+            <p className="text-slate-500 text-sm mt-2">Your payout requests will appear in the Notion embed above</p>
           </div>
         ) : (
           <div className="space-y-4">
