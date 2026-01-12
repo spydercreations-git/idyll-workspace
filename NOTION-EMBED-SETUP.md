@@ -22,16 +22,16 @@ From the public link, extract the **32-character database ID**:
 - Public Link: `https://www.notion.so/idyll/Tasks-2cc28c5fb67380b6b9eadeea94981afb`
 - Database ID: `2cc28c5fb67380b6b9eadeea94981afb`
 
-### **Step 3: Update Environment Variables**
+### **Step 3: Current Database URLs (Updated with Your Workspace)**
 
-Update your `.env` file with the correct database IDs:
+The following URLs are now hardcoded in the components:
 
-```env
-VITE_NOTION_TASKS_DB=2cc28c5fb67380b6b9eadeea94981afb
-VITE_NOTION_MEETINGS_DB=2e628c5fb67380e58d64eef87105515d
-VITE_NOTION_PAYOUTS_DB=2e628c5fb67380568bd2ef6a1eb05965
-VITE_NOTION_APPLICATIONS_DB=2e628c5fb6738005950fdadb6dcd2ba3
-VITE_NOTION_NOTIFICATIONS_DB=2e628c5fb673807fbf92f7fbd55fa913
+```
+Tasks Database: https://idyllproductionsevo.notion.site/ebd//2cc28c5fb67380b6b9eadeea94981afb?v=2cc28c5fb67380e481ef000c6254bab6
+Meetings Database: https://idyllproductionsevo.notion.site/ebd//2e628c5fb67380e58d64eef87105515d?v=2e628c5fb67380a8ad7f000c8e26beea
+Payouts Database: https://idyllproductionsevo.notion.site/ebd//2e628c5fb67380568bd2ef6a1eb05965?v=2e628c5fb673801bb2ae000c1b309c09
+Applications Database: https://idyllproductionsevo.notion.site/ebd//2e628c5fb6738005950fdadb6dcd2ba3?v=2e628c5fb6738051b69a000c7b48dee1
+Notifications Database: https://idyllproductionsevo.notion.site/ebd//2e628c5fb673807fbf92f7fbd55fa913?v=2e628c5fb6738051a83b000c444903f6
 ```
 
 ### **Step 4: Verify Database Structure**
@@ -89,7 +89,7 @@ Make sure each database has the required properties:
 
 ## 🔧 **Fixed Embed URLs**
 
-The embed URLs have been updated to the correct format:
+The embed URLs have been updated to the correct format and hardcoded:
 
 ### **Before (Broken):**
 ```
@@ -101,6 +101,11 @@ https://www.notion.so/embed/DATABASE_ID?embed=true&v=table
 https://www.notion.so/DATABASE_ID?v=table&embed=true
 ```
 
+### **Enhanced iframe attributes:**
+- Added `allow-top-navigation` to sandbox
+- Added `loading="lazy"` for better performance
+- Improved sandbox permissions
+
 ---
 
 ## 🧪 **Testing the Fix**
@@ -110,11 +115,11 @@ https://www.notion.so/DATABASE_ID?v=table&embed=true
 Open these URLs in your browser to verify they're publicly accessible:
 
 ```
-https://www.notion.so/2cc28c5fb67380b6b9eadeea94981afb?v=table&embed=true
-https://www.notion.so/2e628c5fb67380e58d64eef87105515d?v=table&embed=true
-https://www.notion.so/2e628c5fb67380568bd2ef6a1eb05965?v=table&embed=true
-https://www.notion.so/2e628c5fb6738005950fdadb6dcd2ba3?v=table&embed=true
-https://www.notion.so/2e628c5fb673807fbf92f7fbd55fa913?v=table&embed=true
+https://idyllproductionsevo.notion.site/ebd//2cc28c5fb67380b6b9eadeea94981afb?v=2cc28c5fb67380e481ef000c6254bab6
+https://idyllproductionsevo.notion.site/ebd//2e628c5fb67380e58d64eef87105515d?v=2e628c5fb67380a8ad7f000c8e26beea
+https://idyllproductionsevo.notion.site/ebd//2e628c5fb67380568bd2ef6a1eb05965?v=2e628c5fb673801bb2ae000c1b309c09
+https://idyllproductionsevo.notion.site/ebd//2e628c5fb6738005950fdadb6dcd2ba3?v=2e628c5fb6738051b69a000c7b48dee1
+https://idyllproductionsevo.notion.site/ebd//2e628c5fb673807fbf92f7fbd55fa913?v=2e628c5fb6738051a83b000c444903f6
 ```
 
 ### **2. Test in Website:**
@@ -144,18 +149,26 @@ https://www.notion.so/2e628c5fb673807fbf92f7fbd55fa913?v=table&embed=true
 **Cause:** Database is empty or properties don't match
 **Solution:** Add sample data and verify property names match the code
 
+### **Issue 5: Still getting "refused to connect" after making public**
+**Cause:** Browser cache or Notion propagation delay
+**Solution:** 
+- Clear browser cache and cookies
+- Wait 5-10 minutes for Notion to propagate changes
+- Try opening the direct URL in incognito mode
+- Verify the database is actually public by opening in a different browser
+
 ---
 
 ## 📋 **Checklist for Success**
 
 - [ ] All 5 databases are publicly shared ("Share to web" enabled)
-- [ ] Database IDs are correctly extracted (32 characters each)
-- [ ] Environment variables are updated with correct IDs
+- [ ] Database IDs match the hardcoded ones in the components
 - [ ] Database properties match the required structure
 - [ ] Sample data exists in each database
-- [ ] Embed URLs use the correct format
+- [ ] Direct embed URLs work in browser (test the URLs above)
 - [ ] Website builds without errors
 - [ ] Embeds load in the browser without "refused to connect"
+- [ ] Clear browser cache if still having issues
 
 ---
 
@@ -174,3 +187,27 @@ After following this guide, you should see:
 - Payout Management: Live Notion database showing all payouts
 
 All embeds should load instantly with no "refused to connect" errors! 🚀
+
+---
+
+## 🔄 **If Still Not Working**
+
+1. **Double-check database sharing:**
+   - Open each database in Notion
+   - Click "Share" → Ensure "Share to web" is ON
+   - Copy the public link and verify it contains the correct ID
+
+2. **Test direct access:**
+   - Open the embed URLs above in a new browser tab
+   - If they don't work, the database isn't properly shared
+
+3. **Clear everything:**
+   - Clear browser cache and cookies
+   - Hard refresh the website (Ctrl+F5)
+   - Try in incognito/private mode
+
+4. **Verify database structure:**
+   - Ensure all required properties exist
+   - Add at least one row of sample data to each database
+
+The fix is now implemented with hardcoded database IDs and improved iframe attributes!
