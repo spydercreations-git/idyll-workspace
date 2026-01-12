@@ -928,30 +928,6 @@ const App: React.FC = () => {
       console.error('Error submitting application:', error);
     }
   };
-    try {
-      await notionDatabase.createApplication({
-        name: applicationData.name,
-        email: applicationData.email,
-        contact: applicationData.contact,
-        location: applicationData.location,
-        software: applicationData.software,
-        role: applicationData.role,
-        portfolio: applicationData.portfolioLink
-      });
-
-      // Add notification for moderators
-      await addNotification({
-        type: 'user',
-        title: 'New Editor Application',
-        message: `${applicationData.name} applied to join as an editor`,
-        urgent: true
-      });
-
-      await loadAppData();
-    } catch (error) {
-      console.error('Error submitting application:', error);
-    }
-  };
 
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center text-slate-100 font-sans selection:bg-blue-500/20 relative">
