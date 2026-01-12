@@ -128,7 +128,7 @@ const App: React.FC = () => {
         { event: '*', schema: 'public', table: 'chat_messages' },
         (payload) => {
           console.log('💬 Chat message change:', payload);
-          loadAppData(); // Refresh all data
+          loadAppData(); // Refresh all data including chat
         }
       )
       .on('postgres_changes', 
@@ -976,6 +976,8 @@ const App: React.FC = () => {
             onDeleteMeeting={deleteMeeting}
             onUpdatePayout={updatePayout}
             onAddChatMessage={addChatMessage}
+            onEditChatMessage={editChatMessage}
+            onDeleteChatMessage={deleteChatMessage}
             onAddNotification={addNotification}
             onRemoveUser={removeUser}
             onChangeUserRole={changeUserRole}
@@ -994,6 +996,8 @@ const App: React.FC = () => {
           onUpdateTask={updateTask}
           onCreatePayout={createPayout}
           onAddChatMessage={addChatMessage}
+          onEditChatMessage={editChatMessage}
+          onDeleteChatMessage={deleteChatMessage}
         />;
       default: return <WelcomePage onNavigate={setCurrentPage} />;
     }

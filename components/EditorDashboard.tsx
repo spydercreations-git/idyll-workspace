@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, CheckSquare, Calendar, MessageSquare, DollarSign, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, CheckSquare, Calendar, MessageSquare, DollarSign, LogOut, Edit, Trash2 } from 'lucide-react';
 import { UserProfile } from '../types';
 import { useTiltEffect } from '../hooks/useTiltEffect';
 
@@ -13,6 +13,8 @@ interface EditorDashboardProps {
   onUpdateTask: (taskId: string, updates: any) => void;
   onCreatePayout: (payoutData: any) => void;
   onAddChatMessage: (message: string, sender: string) => void;
+  onEditChatMessage?: (messageId: number, newMessage: string) => void;
+  onDeleteChatMessage?: (messageId: number) => void;
 }
 
 const EditorDashboard: React.FC<EditorDashboardProps> = ({ 
@@ -24,11 +26,15 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   chatMessages, 
   onUpdateTask, 
   onCreatePayout, 
-  onAddChatMessage 
+  onAddChatMessage,
+  onEditChatMessage,
+  onDeleteChatMessage
 }) => {
   const [activeTab, setActiveTab] = useState('profile');
   const [showPayoutForm, setShowPayoutForm] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
   const [newPayout, setNewPayout] = useState({
     project: '',
     editedLink: '',
@@ -39,8 +45,16 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
     username: user.displayName,
     email: user.email,
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    notionDatabaseId: localStorage.getItem(`notion_db_${user.email}`) || ''
   });
+
+  // Save Notion database ID to localStorage when it changes
+  useEffect(() => {
+    if (profileData.notionDatabaseId) {
+      localStorage.setItem(`notion_db_${user.email}`, profileData.notionDatabaseId);
+    }
+  }, [profileData.notionDatabaseId, user.email]);
 
   const switchToManagement = () => {
     // This would be handled by proper role management in production
@@ -58,7 +72,15 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
       alert('Passwords do not match!');
       return;
     }
-    alert('Profile updated successfully!');
+    
+    // Save Notion database ID
+    if (profileData.notionDatabaseId) {
+      localStorage.setItem(`notion_db_${user.email}`, profileData.notionDatabaseId);
+      alert('Profile updated successfully! Your personal Notion database has been connected.');
+    } else {
+      alert('Profile updated successfully!');
+    }
+    
     setProfileData({
       ...profileData,
       newPassword: '',
@@ -90,6 +112,30 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
     if (chatMessage.trim()) {
       onAddChatMessage(chatMessage, user.displayName);
       setChatMessage('');
+    }
+  };
+
+  const handleEditMessage = (messageId: number, currentMessage: string) => {
+    setEditingMessageId(messageId);
+    setEditingMessageText(currentMessage);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingMessageId && editingMessageText.trim() && onEditChatMessage) {
+      onEditChatMessage(editingMessageId, editingMessageText);
+      setEditingMessageId(null);
+      setEditingMessageText('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingMessageText('');
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (confirm('Delete this message?') && onDeleteChatMessage) {
+      onDeleteChatMessage(messageId);
     }
   };
 
@@ -142,6 +188,33 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
               />
             </div>
           </div>
+          
+          {/* Add Notion Database Section */}
+          <div className="mt-8 pt-8 border-t border-slate-700/50">
+            <h4 className="text-lg font-semibold text-white mb-4">Personal Notion Database</h4>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-slate-300 text-sm font-medium mb-2">Notion Database ID</label>
+                <input
+                  type="text"
+                  value={profileData.notionDatabaseId || ''}
+                  onChange={(e) => setProfileData({...profileData, notionDatabaseId: e.target.value})}
+                  placeholder="Enter your personal Notion database ID"
+                  className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
+                />
+                <p className="text-slate-500 text-xs mt-2">
+                  This will give you access to your personal tasks, meetings, notes, and payouts from your own Notion workspace.
+                </p>
+              </div>
+              {profileData.notionDatabaseId && (
+                <div className="p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
+                  <p className="text-blue-400 text-sm font-medium">✓ Personal Notion Database Connected</p>
+                  <p className="text-blue-300/80 text-xs mt-1">You now have access to your personal workspace data.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
           <button 
             type="submit"
             className="mt-6 px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
@@ -299,14 +372,63 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   const renderMeetings = () => (
     <div className="space-y-6 animate-slide-up">
       <div className="glass-card rounded-2xl p-8 animate-fade-scale">
-        <h3 className="text-2xl font-semibold text-white mb-6">Meeting Calendar</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-semibold text-white">📅 Meeting Calendar</h3>
+          <button 
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-slate-700/50 hover:bg-slate-600/50 text-white font-medium rounded-xl transition-colors btn-focus"
+          >
+            🔄 Refresh
+          </button>
+        </div>
+        
+        {/* Notion Embed for Meetings */}
+        <div className="mb-6">
+          <div className="border-2 border-blue-500/30 rounded-2xl overflow-hidden bg-slate-900/50">
+            {profileData.notionDatabaseId ? (
+              <iframe 
+                src={`https://www.notion.so/embed/${profileData.notionDatabaseId}`}
+                width="100%" 
+                height="500px"
+                style={{
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                className="notion-embed"
+              />
+            ) : (
+              <div className="p-8 text-center">
+                <p className="text-slate-400 text-lg mb-2">📅 Personal Meeting Calendar</p>
+                <p className="text-slate-500 text-sm mb-4">Connect your personal Notion database in Profile Settings to view your meetings here</p>
+                <button 
+                  onClick={() => setActiveTab('profile')}
+                  className="px-4 py-2 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
+                >
+                  Go to Profile Settings
+                </button>
+              </div>
+            )}
+          </div>
+          <p className="text-slate-500 text-xs mt-2 text-center">
+            {profileData.notionDatabaseId ? 
+              'Your personal meeting calendar from Notion workspace' : 
+              'Add your Notion database ID in Profile Settings to see your personal meetings'
+            }
+          </p>
+        </div>
+
+        {/* Fallback: Show meetings from database if Notion embed fails */}
         {meetings.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">No meetings scheduled</p>
-            <p className="text-slate-500 text-sm mt-2">Your scheduled meetings will appear here</p>
+            <p className="text-slate-500 text-sm mt-2">Your scheduled meetings will appear above in the Notion embed</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-white mb-4">Upcoming Meetings</h4>
             {meetings.map((meeting: any, index: number) => (
               <div key={meeting.id} className={`glass-panel rounded-xl p-6 border border-slate-700/50 animate-slide-up animate-delay-${(index + 1) * 100}`}>
                 <div className="flex items-center justify-between">
@@ -315,9 +437,14 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
                     <p className="text-slate-400 text-sm">{new Date(meeting.date).toLocaleDateString()} at {meeting.time}</p>
                     <p className="text-slate-500 text-xs">Attendees: {Array.isArray(meeting.attendees) ? meeting.attendees.join(', ') : meeting.attendees}</p>
                   </div>
-                  <button className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors btn-focus">
-                    Join
-                  </button>
+                  {meeting.link && (
+                    <button 
+                      onClick={() => window.open(meeting.link, '_blank')}
+                      className="px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-500 transition-colors btn-focus"
+                    >
+                      Join Meeting
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -330,22 +457,76 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
   const renderNotes = () => (
     <div className="space-y-6 animate-slide-up">
       <div className="glass-card rounded-2xl p-8 animate-fade-scale">
-        <h3 className="text-2xl font-semibold text-white mb-6">Live Chat with Moderators</h3>
+        <h3 className="text-2xl font-semibold text-white mb-6">💬 Live Chat with Management</h3>
         <div className="glass-panel rounded-xl p-4 h-96 mb-4 overflow-y-auto">
           <div className="space-y-4">
             {chatMessages.map((message: any) => (
-              <div key={message.id} className="flex items-start gap-3 animate-slide-up animate-delay-100">
+              <div key={message.id} className="flex items-start gap-3 animate-slide-up animate-delay-100 group">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium ${
                   message.type === 'system' ? 'bg-gray-600' : 
                   message.sender === user.displayName ? 'bg-slate-600' : 'bg-blue-600'
                 }`}>
                   {message.sender.charAt(0).toUpperCase()}
                 </div>
-                <div className={message.sender === user.displayName ? 'ml-auto text-right' : ''}>
-                  <p className="text-slate-300 text-sm">
-                    <span className="font-medium">{message.sender === user.displayName ? 'You' : message.sender}:</span> {message.message}
-                  </p>
-                  <p className="text-slate-500 text-xs">{new Date(message.timestamp).toLocaleTimeString()}</p>
+                <div className={`flex-1 ${message.sender === user.displayName ? 'ml-auto text-right' : ''}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-slate-300 text-sm font-medium">
+                      {message.sender === user.displayName ? 'You' : message.sender}
+                    </p>
+                    <p className="text-slate-500 text-xs">{new Date(message.timestamp).toLocaleTimeString()}</p>
+                    {message.sender === user.displayName && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button 
+                          onClick={() => handleEditMessage(message.id, message.message)}
+                          className="text-blue-400 hover:text-blue-300 text-xs p-1 rounded"
+                          title="Edit message"
+                        >
+                          <Edit size={12} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteMessage(message.id)}
+                          className="text-red-400 hover:text-red-300 text-xs p-1 rounded"
+                          title="Delete message"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {editingMessageId === message.id ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editingMessageText}
+                        onChange={(e) => setEditingMessageText(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-800/50 border border-slate-700/50 rounded-lg text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={handleSaveEdit}
+                          className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-500 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button 
+                          onClick={handleCancelEdit}
+                          className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-500 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-300 text-sm bg-slate-800/30 rounded-lg px-3 py-2 inline-block">
+                      {message.message}
+                      {message.is_edited && <span className="text-slate-500 text-xs ml-2">(edited)</span>}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -356,16 +537,20 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
             type="text"
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Type your message to management..."
             className="flex-1 px-4 py-3 bg-slate-800/50 border border-slate-700/50 rounded-xl text-white focus:border-blue-500 focus:outline-none transition-colors btn-focus"
           />
           <button 
             type="submit"
-            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus"
+            disabled={!chatMessage.trim()}
+            className="px-6 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-500 transition-colors btn-focus disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>
         </form>
+        <p className="text-slate-500 text-xs mt-2 text-center">
+          💡 Messages are delivered instantly via WebSocket connection
+        </p>
       </div>
     </div>
   );

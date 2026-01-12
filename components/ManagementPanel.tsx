@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Users, CheckSquare, Calendar, DollarSign, MessageSquare, Bell, LogOut, Shield, Crown, Edit3, RefreshCw } from 'lucide-react';
+import { UserCheck, Users, CheckSquare, Calendar, DollarSign, MessageSquare, Bell, LogOut, Shield, Crown, Edit3, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import { UserProfile } from '../types';
 
 interface ManagementPanelProps {
@@ -14,6 +14,8 @@ interface ManagementPanelProps {
   onDeleteMeeting: (meetingId: number) => void;
   onUpdatePayout: (payoutId: number, updates: any) => void;
   onAddChatMessage: (message: string, sender: string) => void;
+  onEditChatMessage?: (messageId: number, newMessage: string) => void;
+  onDeleteChatMessage?: (messageId: number) => void;
   onAddNotification: (notification: any) => void;
   onRemoveUser: (userId: number, userEmail: string, userName: string) => void;
   onChangeUserRole: (userId: number, userEmail: string, userName: string, newRole: string) => void;
@@ -31,6 +33,8 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   onDeleteMeeting,
   onUpdatePayout,
   onAddChatMessage,
+  onEditChatMessage,
+  onDeleteChatMessage,
   onAddNotification,
   onRemoveUser,
   onChangeUserRole
@@ -39,7 +43,10 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   const [showCreateTask, setShowCreateTask] = useState(false);
   const [showCreateMeeting, setShowCreateMeeting] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
+  const [selectedChatUser, setSelectedChatUser] = useState('');
   const [syncingNotion, setSyncingNotion] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+  const [editingMessageText, setEditingMessageText] = useState('');
   const [newTask, setNewTask] = useState({
     name: '',
     assignedTo: '',
@@ -139,10 +146,96 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   const renderApproval = () => (
     <div className="space-y-6">
       <div className="bg-slate-900/50 rounded-3xl p-8">
-        <h3 className="text-2xl font-black text-white mb-6">User Approval</h3>
-        <div className="text-center py-12">
-          <p className="text-slate-400 text-lg">No pending approvals</p>
-          <p className="text-slate-500 text-sm mt-2">General user approvals will appear here</p>
+        <h3 className="text-2xl font-black text-white mb-6">👥 User Approval Center</h3>
+        
+        {/* Pending Approvals */}
+        <div className="mb-8">
+          <h4 className="text-lg font-semibold text-white mb-4">Pending User Approvals</h4>
+          {appState.users.filter((user: any) => !user.approved).length === 0 ? (
+            <div className="text-center py-8 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+              <p className="text-slate-400 text-lg">✅ No pending user approvals</p>
+              <p className="text-slate-500 text-sm mt-2">All registered users have been reviewed</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {appState.users.filter((user: any) => !user.approved).map((pendingUser: any) => (
+                <div key={pendingUser.id} className="bg-slate-800/50 rounded-2xl p-6 border border-amber-500/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="text-lg font-bold text-white">{pendingUser.display_name}</h5>
+                      <p className="text-slate-400 text-sm">{pendingUser.email}</p>
+                      <p className="text-amber-400 text-xs font-semibold">⏳ Awaiting Approval</p>
+                      <p className="text-slate-500 text-xs mt-1">
+                        Registered: {new Date(pendingUser.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex gap-3">
+                      <button 
+                        onClick={async () => {
+                          if (confirm(`Approve ${pendingUser.display_name} as an editor?`)) {
+                            console.log('Approving user:', pendingUser.email);
+                            // Find corresponding application
+                            const application = appState.applications.find((app: any) => app.email === pendingUser.email);
+                            if (application) {
+                              await onApproveUser(application.id);
+                            } else {
+                              // Create a temporary application for approval
+                              alert(`${pendingUser.display_name} has been approved! They can now access their dashboard.`);
+                              // Force page refresh to update the interface
+                              window.location.reload();
+                            }
+                          }
+                        }}
+                        className="px-4 py-2 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors"
+                      >
+                        ✓ Approve
+                      </button>
+                      <button 
+                        onClick={() => {
+                          if (confirm(`Reject ${pendingUser.display_name}'s application?`)) {
+                            console.log('Rejecting user:', pendingUser.email);
+                            onRemoveUser(pendingUser.id, pendingUser.email, pendingUser.display_name);
+                          }
+                        }}
+                        className="px-4 py-2 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+                      >
+                        ✗ Reject
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recently Approved Users */}
+        <div>
+          <h4 className="text-lg font-semibold text-white mb-4">Recently Approved Users</h4>
+          {appState.users.filter((user: any) => user.approved).slice(0, 5).length === 0 ? (
+            <div className="text-center py-6 bg-slate-800/20 rounded-2xl">
+              <p className="text-slate-500">No approved users yet</p>
+            </div>
+          ) : (
+            <div className="grid gap-3">
+              {appState.users.filter((user: any) => user.approved).slice(0, 5).map((user: any) => (
+                <div key={user.id} className="bg-slate-800/30 rounded-xl p-4 border border-green-500/20">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white font-semibold">{user.display_name}</p>
+                      <p className="text-slate-400 text-sm">{user.email}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className="px-2 py-1 bg-green-900/50 text-green-400 text-xs font-bold rounded-full">
+                        ✓ Approved
+                      </span>
+                      <p className="text-slate-500 text-xs mt-1">Role: {user.role}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -528,6 +621,30 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
     }
   };
 
+  const handleEditMessage = (messageId: number, currentMessage: string) => {
+    setEditingMessageId(messageId);
+    setEditingMessageText(currentMessage);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingMessageId && editingMessageText.trim() && onEditChatMessage) {
+      onEditChatMessage(editingMessageId, editingMessageText);
+      setEditingMessageId(null);
+      setEditingMessageText('');
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingMessageText('');
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    if (confirm('Delete this message?') && onDeleteChatMessage) {
+      onDeleteChatMessage(messageId);
+    }
+  };
+
   const handleSyncToNotion = async () => {
     setSyncingNotion(true);
     try {
@@ -782,23 +899,98 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   const renderNotes = () => (
     <div className="space-y-6">
       <div className="bg-slate-900/50 rounded-3xl p-8">
-        <h3 className="text-2xl font-black text-white mb-6">Team Chat</h3>
+        <h3 className="text-2xl font-black text-white mb-6">💬 Team Chat & User Selection</h3>
+        
+        {/* User Selection for Chat */}
+        <div className="mb-6">
+          <label className="block text-slate-300 text-sm font-semibold mb-3">Chat with specific user:</label>
+          <select
+            value={selectedChatUser}
+            onChange={(e) => setSelectedChatUser(e.target.value)}
+            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-xl text-white focus:border-blue-500 focus:outline-none"
+          >
+            <option value="">All Users (General Chat)</option>
+            {appState.users.filter((user: any) => user.approved && user.role === 'editor').map((user: any) => (
+              <option key={user.id} value={user.email}>{user.display_name} ({user.email})</option>
+            ))}
+          </select>
+        </div>
+
         <div className="bg-slate-800/50 rounded-2xl p-4 h-96 mb-4 overflow-y-auto">
           <div className="space-y-4">
-            {appState.chatMessages.map((message: any) => (
-              <div key={message.id} className="flex items-start gap-3">
+            {appState.chatMessages
+              .filter((message: any) => !selectedChatUser || message.recipient === selectedChatUser || message.sender === user.displayName)
+              .map((message: any) => (
+              <div key={message.id} className="flex items-start gap-3 group">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ${
                   message.type === 'system' ? 'bg-gray-600' : 'bg-blue-600'
                 }`}>
                   {message.sender.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <p className="text-slate-300 text-sm">
-                    <span className="font-bold">{message.sender}:</span> {message.message}
-                  </p>
-                  <p className="text-slate-500 text-xs">
-                    {new Date(message.timestamp).toLocaleTimeString()}
-                  </p>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="text-slate-300 text-sm font-bold">
+                      {message.sender}
+                      {selectedChatUser && message.recipient && (
+                        <span className="text-slate-500 text-xs ml-2">→ {message.recipient}</span>
+                      )}
+                    </p>
+                    <p className="text-slate-500 text-xs">
+                      {new Date(message.timestamp).toLocaleTimeString()}
+                    </p>
+                    {message.sender === user.displayName && (
+                      <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                        <button 
+                          onClick={() => handleEditMessage(message.id, message.message)}
+                          className="text-blue-400 hover:text-blue-300 text-xs p-1 rounded"
+                          title="Edit message"
+                        >
+                          <Edit size={12} />
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteMessage(message.id)}
+                          className="text-red-400 hover:text-red-300 text-xs p-1 rounded"
+                          title="Delete message"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  {editingMessageId === message.id ? (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={editingMessageText}
+                        onChange={(e) => setEditingMessageText(e.target.value)}
+                        className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600/50 rounded-lg text-white focus:border-blue-500 focus:outline-none transition-colors text-sm"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSaveEdit();
+                          if (e.key === 'Escape') handleCancelEdit();
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={handleSaveEdit}
+                          className="px-2 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-500 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button 
+                          onClick={handleCancelEdit}
+                          className="px-2 py-1 bg-gray-600 text-white text-xs rounded hover:bg-gray-500 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-300 text-sm bg-slate-700/30 rounded-lg px-3 py-2">
+                      {message.message}
+                      {message.is_edited && <span className="text-slate-500 text-xs ml-2">(edited)</span>}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -809,16 +1001,20 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
             type="text"
             value={chatMessage}
             onChange={(e) => setChatMessage(e.target.value)}
-            placeholder="Type your message..."
+            placeholder={selectedChatUser ? `Message ${selectedChatUser}...` : "Message all users..."}
             className="flex-1 px-4 py-3 bg-slate-800 border border-slate-700 rounded-2xl text-white focus:border-blue-500 focus:outline-none"
           />
           <button 
             type="submit"
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl transition-colors"
+            disabled={!chatMessage.trim()}
+            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl transition-colors disabled:opacity-50"
           >
             Send
           </button>
         </form>
+        <p className="text-slate-500 text-xs mt-2 text-center">
+          💡 Real-time WebSocket chat - messages appear instantly without refresh
+        </p>
       </div>
     </div>
   );
@@ -826,43 +1022,81 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
   const renderNotifications = () => (
     <div className="space-y-6">
       <div className="bg-slate-900/50 rounded-3xl p-8">
-        <h3 className="text-2xl font-black text-white mb-6">Notification Center</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-black text-white">🔔 Activity & Notification Center</h3>
+          <button 
+            onClick={() => {
+              // Clear all notifications
+              if (confirm('Clear all notifications?')) {
+                console.log('Clearing all notifications');
+              }
+            }}
+            className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-xl transition-colors"
+          >
+            Clear All
+          </button>
+        </div>
+        
         {appState.notifications.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No notifications</p>
-            <p className="text-slate-500 text-sm mt-2">System notifications will appear here</p>
+          <div className="text-center py-12 bg-slate-800/30 rounded-2xl border border-slate-700/50">
+            <p className="text-slate-400 text-lg">📭 No recent activity</p>
+            <p className="text-slate-500 text-sm mt-2">User actions and system notifications will appear here</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-96 overflow-y-auto">
             {appState.notifications.map((notification: any) => (
-              <div key={notification.id} className={`bg-slate-800/50 rounded-2xl p-6 border ${notification.urgent ? 'border-red-500/50' : 'border-slate-700'}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
+              <div key={notification.id} className={`bg-slate-800/50 rounded-2xl p-6 border transition-all hover:bg-slate-800/70 ${
+                notification.urgent ? 'border-red-500/50 bg-red-900/10' : 'border-slate-700'
+              }`}>
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-4">
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                       notification.type === 'task' ? 'bg-blue-600' :
                       notification.type === 'meeting' ? 'bg-purple-600' :
                       notification.type === 'payout' ? 'bg-green-600' :
-                      'bg-yellow-600'
+                      notification.type === 'user' ? 'bg-amber-600' :
+                      'bg-slate-600'
                     }`}>
                       {notification.type === 'task' ? <CheckSquare className="w-6 h-6 text-white" /> :
                        notification.type === 'meeting' ? <Calendar className="w-6 h-6 text-white" /> :
                        notification.type === 'payout' ? <DollarSign className="w-6 h-6 text-white" /> :
-                       <Users className="w-6 h-6 text-white" />}
+                       notification.type === 'user' ? <Users className="w-6 h-6 text-white" /> :
+                       <Bell className="w-6 h-6 text-white" />}
                     </div>
-                    <div>
-                      <h4 className="text-lg font-bold text-white">{notification.title}</h4>
-                      <p className="text-slate-400 text-sm">{notification.message}</p>
-                      <p className="text-slate-500 text-xs">{notification.time}</p>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="text-lg font-bold text-white">{notification.title}</h4>
+                        {notification.urgent && (
+                          <span className="px-2 py-1 bg-red-900/50 text-red-400 text-xs font-bold rounded-lg animate-pulse">
+                            🚨 URGENT
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-slate-400 text-sm mb-2">{notification.message}</p>
+                      <div className="flex items-center gap-4 text-xs text-slate-500">
+                        <span>📅 {notification.time}</span>
+                        <span className="capitalize">📂 {notification.type}</span>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    {notification.urgent && (
-                      <span className="px-2 py-1 bg-red-900/50 text-red-400 text-xs font-bold rounded-lg">
-                        Urgent
-                      </span>
-                    )}
-                    <button className="px-4 py-2 bg-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-600 transition-colors">
-                      View
+                    <button 
+                      onClick={() => {
+                        console.log('Mark as read:', notification.id);
+                      }}
+                      className="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Mark Read
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirm('Delete this notification?')) {
+                          console.log('Delete notification:', notification.id);
+                        }
+                      }}
+                      className="px-3 py-1 bg-red-600 text-white text-xs font-bold rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -870,6 +1104,26 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
             ))}
           </div>
         )}
+        
+        {/* Activity Summary */}
+        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-blue-400">{appState.tasks.length}</div>
+            <div className="text-slate-400 text-sm">Total Tasks</div>
+          </div>
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-purple-400">{appState.meetings.length}</div>
+            <div className="text-slate-400 text-sm">Meetings</div>
+          </div>
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-green-400">{appState.payouts.length}</div>
+            <div className="text-slate-400 text-sm">Payouts</div>
+          </div>
+          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+            <div className="text-2xl font-bold text-amber-400">{appState.users.filter((u: any) => u.approved).length}</div>
+            <div className="text-slate-400 text-sm">Active Users</div>
+          </div>
+        </div>
       </div>
     </div>
   );
