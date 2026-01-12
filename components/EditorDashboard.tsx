@@ -298,18 +298,10 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
               </div>
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your personal tasks from Notion - Changes sync in real-time
-          </p>
         </div>
 
         {/* Fallback: Show tasks from database if Notion embed fails */}
-        {tasks.length === 0 ? (
-          <div className="text-center py-8 bg-slate-800/20 rounded-2xl">
-            <p className="text-slate-400 text-lg">No tasks assigned yet</p>
-            <p className="text-slate-500 text-sm mt-2">Your assigned tasks will appear in the Notion embed above</p>
-          </div>
-        ) : (
+        {tasks.length > 0 && (
           <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
             {/* Notion-Style Header */}
             <div className="bg-slate-800/50 border-b border-slate-700/50 px-4 py-3">
@@ -467,9 +459,6 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
               </div>
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your meetings from Notion - Changes sync in real-time
-          </p>
         </div>
 
         {/* Personal Notion Database Option */}
@@ -502,12 +491,7 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
         )}
 
         {/* Fallback: Show meetings from database if Notion embed fails */}
-        {meetings.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No meetings scheduled</p>
-            <p className="text-slate-500 text-sm mt-2">Your scheduled meetings will appear above in the Notion embed</p>
-          </div>
-        ) : (
+        {meetings.length > 0 && (
           <div className="space-y-4">
             <h4 className="text-lg font-semibold text-white mb-4">Upcoming Meetings</h4>
             {meetings.map((meeting: any, index: number) => (
@@ -733,18 +717,10 @@ const EditorDashboard: React.FC<EditorDashboardProps> = ({
               </div>
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Your personal payouts from Notion - Changes sync in real-time
-          </p>
         </div>
 
         {/* Fallback: Show payouts from database if Notion embed fails */}
-        {payouts.length === 0 ? (
-          <div className="text-center py-8 bg-slate-800/20 rounded-2xl">
-            <p className="text-slate-400 text-lg">No payout requests yet</p>
-            <p className="text-slate-500 text-sm mt-2">Your payout requests will appear in the Notion embed above</p>
-          </div>
-        ) : (
+        {payouts.length > 0 && (
           <div className="space-y-4">
             {payouts.map((payout: any, index: number) => (
               <div key={payout.id} className={`glass-panel rounded-xl p-6 border border-slate-700/50 animate-slide-up animate-delay-${(index + 1) * 100}`}>

@@ -47,12 +47,16 @@ const App: React.FC = () => {
     initializeApp();
   }, []);
 
-  // Save current page to localStorage
+  // Save current page to localStorage (only for authenticated pages)
   useEffect(() => {
-    if (currentPage !== 'welcome') {
+    if (user && (currentPage === 'dashboard' || currentPage === 'management')) {
       localStorage.setItem('currentPage', currentPage);
+      console.log('💾 Saved current page:', currentPage);
+    } else if (!user && ['welcome', 'login', 'create-account', 'apply'].includes(currentPage)) {
+      localStorage.setItem('currentPage', currentPage);
+      console.log('💾 Saved current page:', currentPage);
     }
-  }, [currentPage]);
+  }, [currentPage, user]);
 
   const initializeApp = async () => {
     setLoading(true);
@@ -85,25 +89,36 @@ const App: React.FC = () => {
             role: userData.role as 'editor' | 'moderator' | 'owner',
             approved: userData.approved
           });
-          // Restore saved page or default to dashboard
+          
+          // Restore saved page or default based on role
           const savedPage = localStorage.getItem('currentPage');
-          if (savedPage && savedPage !== 'welcome') {
+          if (savedPage && (savedPage === 'dashboard' || savedPage === 'management')) {
             setCurrentPage(savedPage);
           } else {
-            setCurrentPage('dashboard');
+            // Default page based on role
+            if (userData.role === 'editor') {
+              setCurrentPage('dashboard');
+            } else if (userData.role === 'moderator' || userData.role === 'owner') {
+              setCurrentPage('management');
+            } else {
+              setCurrentPage('dashboard');
+            }
           }
         } else if (userData && !userData.approved) {
           setCurrentPage('approval');
         }
       } else {
-        // No session, check for saved page
+        // No session, check for saved page but only allow non-auth pages
         const savedPage = localStorage.getItem('currentPage');
-        if (savedPage && savedPage !== 'dashboard') {
+        if (savedPage && ['welcome', 'login', 'create-account', 'apply'].includes(savedPage)) {
           setCurrentPage(savedPage);
+        } else {
+          setCurrentPage('welcome');
         }
       }
     } catch (error) {
       console.error('Error checking auth state:', error);
+      setCurrentPage('welcome');
     }
   };
 
@@ -189,6 +204,7 @@ const App: React.FC = () => {
   const handleLogout = async () => {
     await authService.signOut();
     setUser(null);
+    localStorage.removeItem('currentPage'); // Clear saved page on logout
     setCurrentPage('welcome');
   };
 
@@ -228,7 +244,8 @@ const App: React.FC = () => {
           approved: userData.approved
         });
         
-        setCurrentPage('dashboard');
+        // Navigate to management panel for admin users
+        setCurrentPage('management');
         await loadAppData();
         
         // Add login notification
@@ -262,7 +279,15 @@ const App: React.FC = () => {
           approved: userData.approved
         });
         
-        setCurrentPage('dashboard');
+        // Navigate to appropriate page based on role
+        if (userData.role === 'editor') {
+          setCurrentPage('dashboard');
+        } else if (userData.role === 'moderator' || userData.role === 'owner') {
+          setCurrentPage('management');
+        } else {
+          setCurrentPage('dashboard');
+        }
+        
         await loadAppData();
         
         // Add login notification

@@ -489,18 +489,10 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
               </div>
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Connected to Idyll Productions Task Database - Changes sync in real-time
-          </p>
         </div>
 
         {/* Fallback: Show tasks from database if Notion embed fails */}
-        {appState.tasks.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No tasks created yet</p>
-            <p className="text-slate-500 text-sm mt-2">Create tasks to assign to your editors</p>
-          </div>
-        ) : (
+        {appState.tasks.length > 0 && (
           <div className="bg-slate-800/30 rounded-2xl border border-slate-700/50 overflow-hidden">
             {/* Table Header - Notion Style */}
             <div className="bg-slate-800/50 border-b border-slate-700/50 px-4 py-3">
@@ -876,18 +868,10 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
               </div>
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-2 text-center">
-            ✅ Connected to Idyll Productions Meeting Database - Changes sync in real-time
-          </p>
         </div>
 
         {/* Fallback: Show meetings from database if needed */}
-        {appState.meetings.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No meetings scheduled</p>
-            <p className="text-slate-500 text-sm mt-2">Schedule meetings with your editing team</p>
-          </div>
-        ) : (
+        {appState.meetings.length > 0 && (
           <div className="space-y-4">
             {appState.meetings.map((meeting: any) => (
               <div key={meeting.id} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
@@ -954,12 +938,7 @@ const ManagementPanel: React.FC<ManagementPanelProps> = ({
         </div>
 
         {/* Fallback: Show payouts from database if needed */}
-        {appState.payouts.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-slate-400 text-lg">No payout requests</p>
-            <p className="text-slate-500 text-sm mt-2">Editor payout requests will appear here</p>
-          </div>
-        ) : (
+        {appState.payouts.length > 0 && (
           <div className="space-y-4">
             {appState.payouts.map((payout: any) => (
               <div key={payout.id} className="bg-slate-800/50 rounded-2xl p-6 border border-slate-700">
