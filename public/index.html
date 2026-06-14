@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Executive Application – Idyll Productions</title>
+  <meta name="description" content="Apply for the Sales Executive position at Idyll Productions. Join our growing team and help us connect with clients worldwide.">
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="https://res.cloudinary.com/dxd79mrse/image/upload/v1781445552/idyll-productions-orange_q6o4ap.png" type="image/png">
+</head>
+<body>
+
+  <!-- Animated Background Orbs -->
+  <div class="page-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Stroke Decoration -->
+  <img src="https://res.cloudinary.com/dxd79mrse/image/upload/v1781416788/Stroke_surge6.png" alt="" class="stroke-decoration" aria-hidden="true">
+
+  <div class="main-container">
+
+    <!-- Header -->
+    <header class="form-header">
+      <img src="https://res.cloudinary.com/dxd79mrse/image/upload/v1781445552/idyll-productions-orange_q6o4ap.png" alt="Idyll Productions" class="logo">
+      <div class="tagline">Hiring Portal</div>
+    </header>
+
+    <!-- Progress Bar (hidden on step 0 and 5) -->
+    <div class="progress-container" id="progressContainer" style="display:none;">
+      <div class="progress-steps">
+        <div class="progress-step active" data-step="1">
+          <div class="step-circle">1</div>
+          <div class="step-label">Personal</div>
+        </div>
+        <div class="progress-line" id="line-1-2"><div class="progress-line-fill"></div></div>
+        <div class="progress-step" data-step="2">
+          <div class="step-circle">2</div>
+          <div class="step-label">Experience</div>
+        </div>
+        <div class="progress-line" id="line-2-3"><div class="progress-line-fill"></div></div>
+        <div class="progress-step" data-step="3">
+          <div class="step-circle">3</div>
+          <div class="step-label">Motivation</div>
+        </div>
+        <div class="progress-line" id="line-3-4"><div class="progress-line-fill"></div></div>
+        <div class="progress-step" data-step="4">
+          <div class="step-circle">4</div>
+          <div class="step-label">Review</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card">
+      <form id="hiringForm" enctype="multipart/form-data" novalidate>
+
+        <!-- ==================== STEP 0: WELCOME ==================== -->
+        <div class="step-section welcome-section active" data-step="0">
+          <div class="welcome-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Now Hiring</div>
+          <h1>Sales Executive at <span>Idyll Productions</span></h1>
+          <p class="welcome-subtitle">Join our creative team and help connect brands with world-class video production services. We're looking for driven, enthusiastic individuals ready to grow.</p>
+          <!-- Side by Side Cards -->
+          <div class="welcome-grid">
+            <!-- Role Responsibilities -->
+            <div class="role-card">
+              <div class="role-card-title">
+                <div class="role-card-title-left">
+                  <div class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+                  What You'll Be Doing
+                </div>
+              </div>
+              <ul>
+                <li>Create professional presentations (PPTs) and pitch decks for client meetings</li>
+                <li>Prepare detailed and compelling client proposals tailored to each prospect</li>
+                <li>Conduct timely follow-ups with potential and existing clients</li>
+                <li>Communicate effectively with leads across various channels</li>
+                <li>Make domestic as well as international calls when required</li>
+                <li>Explain Idyll Productions' services professionally and confidently to potential clients</li>
+                <li>Assist in building and maintaining strong client relationships</li>
+              </ul>
+              <div class="fresher-note">
+                <span class="note-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+                <span>We are open to hiring people who are still learning sales and business development, provided they are willing to put in genuine effort and improve their communication skills. Training and guidance will be provided where necessary.</span>
+              </div>
+            </div>
+
+            <!-- Compensation Structure -->
+            <div class="role-card">
+              <div class="role-card-title">
+                <div class="role-card-title-left">
+                  <div class="icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+                  Compensation Structure
+                </div>
+                <span class="compensation-badge-tag">100% Commission</span>
+              </div>
+              <ul>
+                <li><strong>No fixed salary</strong> for the first 3 months — this is a commission-only opportunity.</li>
+                <li>You get paid only when you <strong>successfully bring a client</strong> that closes a project with Idyll Productions.</li>
+                <li>Your earnings are <strong>directly based on the business you generate</strong> for the company.</li>
+              </ul>
+              <div class="compensation-example">
+                <div class="compensation-example-title">Commission Rate: <strong>15%</strong> on every project you bring</div>
+                <div class="compensation-example-calc">
+                  <div class="calc-row"><span>Client Project Value</span><span class="calc-value">₹1,00,000</span></div>
+                  <div class="calc-divider"></div>
+                  <div class="calc-row highlight"><span>Your Commission (15%)</span><span class="calc-value">₹15,000</span></div>
+                </div>
+              </div>
+              <div class="fresher-note">
+                <span class="note-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                <span>If you do not bring any clients, there will be no payment during the commission-based period. Please understand this clearly before applying.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal Notice -->
+          <div class="legal-card">
+            <div class="legal-title">
+              <div class="shield-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+              Professional Notice
+            </div>
+            <p>This is a serious professional opportunity. Candidates who join Idyll Productions and sign the agreement are expected to fulfill their responsibilities professionally and with integrity. If someone intentionally causes damage, misuses company information, or violates the agreed terms, Idyll Productions reserves the right to take appropriate legal action in accordance with the signed agreement.</p>
+          </div>
+
+          <button type="button" class="btn btn-primary btn-start" onclick="goToStep(1)">
+            Start Application
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+
+        <!-- ==================== STEP 1: PERSONAL INFO ==================== -->
+        <div class="step-section" data-step="1">
+          <h2 class="section-title">Personal Information</h2>
+          <p class="section-subtitle">Tell us about yourself — all fields marked with * are required.</p>
+
+          <div class="form-row">
+            <div class="form-group" id="group-fullName">
+              <label for="fullName">Full Name <span class="required">*</span></label>
+              <input type="text" id="fullName" name="fullName" placeholder="e.g. Priya Sharma" required>
+              <div class="error-msg">Please enter your full name</div>
+            </div>
+            <div class="form-group" id="group-email">
+              <label for="email">Email Address <span class="required">*</span></label>
+              <input type="email" id="email" name="email" placeholder="e.g. priya@example.com" required>
+              <div class="error-msg">Please enter a valid email address</div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" id="group-phone">
+              <label for="phone">Phone Number <span class="required">*</span></label>
+              <input type="tel" id="phone" name="phone" placeholder="e.g. +91 98765 43210" required>
+              <div class="error-msg">Please enter your phone number</div>
+            </div>
+            <div class="form-group" id="group-dob">
+              <label for="dob">Date of Birth</label>
+              <input type="date" id="dob" name="dob">
+            </div>
+          </div>
+
+          <div class="form-group" id="group-gender">
+            <label>Gender <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" id="gender-male" name="gender" value="Male">
+                <label for="gender-male"><span class="radio-dot"></span> Male</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="gender-female" name="gender" value="Female">
+                <label for="gender-female"><span class="radio-dot"></span> Female</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="gender-pnts" name="gender" value="Prefer Not To Say">
+                <label for="gender-pnts"><span class="radio-dot"></span> Prefer Not To Say</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="gender-other" name="gender" value="Other">
+                <label for="gender-other"><span class="radio-dot"></span> Other</label>
+              </div>
+            </div>
+            <div class="error-msg">Please select your gender</div>
+          </div>
+
+          <div class="form-group" id="group-city">
+            <label for="city">City / Location</label>
+            <input type="text" id="city" name="city" placeholder="e.g. Mumbai, Maharashtra">
+          </div>
+        </div>
+
+        <!-- ==================== STEP 2: EXPERIENCE ==================== -->
+        <div class="step-section" data-step="2">
+          <h2 class="section-title">Experience & Skills</h2>
+          <p class="section-subtitle">Share your professional background — freshers are welcome!</p>
+
+          <div class="form-row">
+            <div class="form-group" id="group-professionalStatus">
+              <label for="professionalStatus">Current Professional Status <span class="required">*</span></label>
+              <select id="professionalStatus" name="professionalStatus" required>
+                <option value="" disabled selected>Select your status</option>
+                <option value="Student">Student</option>
+                <option value="Fresher">Fresher</option>
+                <option value="Working Professional">Working Professional</option>
+                <option value="Freelancer">Freelancer</option>
+                <option value="Business Owner">Business Owner</option>
+              </select>
+              <div class="error-msg">Please select your professional status</div>
+            </div>
+            <div class="form-group" id="group-experience">
+              <label for="experience">Years of Experience in Sales/BD</label>
+              <select id="experience" name="experience">
+                <option value="" disabled selected>Select experience</option>
+                <option value="No experience (Fresher)">No experience (Fresher)</option>
+                <option value="Less than 1 year">Less than 1 year</option>
+                <option value="1-2 years">1–2 years</option>
+                <option value="2-4 years">2–4 years</option>
+                <option value="4+ years">4+ years</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group" id="group-previousCompanies">
+            <label for="previousCompanies">Which companies have you previously worked with?</label>
+            <textarea id="previousCompanies" name="previousCompanies" placeholder="List the companies or organizations you've worked with, one per line..." rows="3"></textarea>
+            <div class="field-note">
+              <span class="note-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--orange-primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+              <span>If you are new and have not worked with any company before, that is completely fine. Freshers are welcome to apply.</span>
+            </div>
+          </div>
+
+          <div class="form-group" id="group-skills">
+            <label>Key Skills</label>
+            <div class="checkbox-group">
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-comm" name="skills" value="Communication">
+                <label for="skill-comm"><span class="check-box">✓</span> Communication</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-pres" name="skills" value="Presentation">
+                <label for="skill-pres"><span class="check-box">✓</span> Presentation</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-lead" name="skills" value="Lead Generation">
+                <label for="skill-lead"><span class="check-box">✓</span> Lead Generation</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-client" name="skills" value="Client Handling">
+                <label for="skill-client"><span class="check-box">✓</span> Client Handling</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-crm" name="skills" value="CRM Tools">
+                <label for="skill-crm"><span class="check-box">✓</span> CRM Tools</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-cold" name="skills" value="Cold Calling">
+                <label for="skill-cold"><span class="check-box">✓</span> Cold Calling</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-neg" name="skills" value="Negotiation">
+                <label for="skill-neg"><span class="check-box">✓</span> Negotiation</label>
+              </div>
+              <div class="checkbox-option">
+                <input type="checkbox" id="skill-sm" name="skills" value="Social Media">
+                <label for="skill-sm"><span class="check-box">✓</span> Social Media</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group" id="group-linkedin">
+            <label for="linkedin">LinkedIn Profile URL <span style="font-weight:400;color:var(--text-muted);">(optional)</span></label>
+            <input type="url" id="linkedin" name="linkedin" placeholder="https://linkedin.com/in/your-profile">
+          </div>
+        </div>
+
+        <!-- ==================== STEP 3: MOTIVATION ==================== -->
+        <div class="step-section" data-step="3">
+          <h2 class="section-title">Motivation & Availability</h2>
+          <p class="section-subtitle">Help us understand your interest and readiness to join.</p>
+
+          <div class="form-group" id="group-whyJoin">
+            <label for="whyJoin">Why do you want to join Idyll Productions? <span class="required">*</span></label>
+            <textarea id="whyJoin" name="whyJoin" placeholder="Tell us what excites you about this opportunity..." rows="4" required></textarea>
+            <div class="error-msg">Please tell us why you'd like to join</div>
+          </div>
+
+          <div class="form-group" id="group-valueToTeam">
+            <label for="valueToTeam">What value can you bring to the team?</label>
+            <textarea id="valueToTeam" name="valueToTeam" placeholder="Describe your strengths and what makes you a great fit..." rows="3"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group" id="group-availability">
+              <label for="availability">Availability <span class="required">*</span></label>
+              <select id="availability" name="availability" required>
+                <option value="" disabled selected>When can you start?</option>
+                <option value="Immediately">Immediately</option>
+                <option value="Within 1 week">Within 1 week</option>
+                <option value="Within 2 weeks">Within 2 weeks</option>
+                <option value="Within 1 month">Within 1 month</option>
+              </select>
+              <div class="error-msg">Please select your availability</div>
+            </div>
+            <div class="form-group" id="group-workMode">
+              <label for="workMode">Work Mode Preference <span class="required">*</span></label>
+              <select id="workMode" name="workMode" required>
+                <option value="" disabled selected>Select preference</option>
+                <option value="Remote">Remote</option>
+                <option value="On-site">On-site</option>
+                <option value="Hybrid">Hybrid</option>
+              </select>
+              <div class="error-msg">Please select work mode</div>
+            </div>
+          </div>
+
+          <!-- Commission Comfort Question -->
+          <div class="form-group" id="group-commissionComfort">
+            <label>Are you comfortable working on a 100% commission basis initially? <span class="required">*</span></label>
+            <div class="radio-group">
+              <div class="radio-option">
+                <input type="radio" id="commission-yes" name="commissionComfort" value="Yes" onchange="handleCommissionChange()">
+                <label for="commission-yes"><span class="radio-dot"></span> Yes</label>
+              </div>
+              <div class="radio-option">
+                <input type="radio" id="commission-no" name="commissionComfort" value="No" onchange="handleCommissionChange()">
+                <label for="commission-no"><span class="radio-dot"></span> No</label>
+              </div>
+            </div>
+            <div class="error-msg">Please select an option</div>
+            <div class="commission-no-msg" id="commissionNoMsg" style="display:none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>This role is currently commission-based only. If you are not comfortable with this structure, this opportunity may not be the right fit for you at this time.</span>
+            </div>
+          </div>
+
+          <div class="form-group" id="group-photo">
+            <label>Upload Your Photo <span style="font-weight:400;color:var(--text-muted);">(optional, max 5MB)</span></label>
+            <div class="file-upload-area" id="fileUploadArea">
+              <input type="file" id="photo" name="photo" accept="image/*,.pdf" onchange="handleFileSelect(this)">
+              <div class="upload-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--orange-primary)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+              <div class="upload-text">Click or drag to upload</div>
+              <div class="upload-hint">JPG, PNG, WebP or PDF — Max 5MB</div>
+              <div class="file-name" id="fileName" style="display:none;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== STEP 4: REVIEW ==================== -->
+        <div class="step-section" data-step="4">
+          <h2 class="section-title">Review Your Application</h2>
+          <p class="section-subtitle">Please verify all details before submitting.</p>
+
+          <!-- Personal Info Review -->
+          <div class="review-section">
+            <div class="review-section-title">
+              <h3>Personal Information</h3>
+              <button type="button" class="edit-btn" onclick="goToStep(1)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><div class="review-label">Full Name</div><div class="review-value" id="rev-fullName">—</div></div>
+              <div class="review-item"><div class="review-label">Email</div><div class="review-value" id="rev-email">—</div></div>
+              <div class="review-item"><div class="review-label">Phone</div><div class="review-value" id="rev-phone">—</div></div>
+              <div class="review-item"><div class="review-label">Gender</div><div class="review-value" id="rev-gender">—</div></div>
+              <div class="review-item"><div class="review-label">Date of Birth</div><div class="review-value" id="rev-dob">—</div></div>
+              <div class="review-item"><div class="review-label">City</div><div class="review-value" id="rev-city">—</div></div>
+            </div>
+          </div>
+
+          <!-- Experience Review -->
+          <div class="review-section">
+            <div class="review-section-title">
+              <h3>Experience & Skills</h3>
+              <button type="button" class="edit-btn" onclick="goToStep(2)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item"><div class="review-label">Professional Status</div><div class="review-value" id="rev-professionalStatus">—</div></div>
+              <div class="review-item"><div class="review-label">Experience</div><div class="review-value" id="rev-experience">—</div></div>
+              <div class="review-item full-width"><div class="review-label">Previous Companies</div><div class="review-value" id="rev-previousCompanies">—</div></div>
+              <div class="review-item full-width"><div class="review-label">Key Skills</div><div class="review-value" id="rev-skills">—</div></div>
+              <div class="review-item full-width"><div class="review-label">LinkedIn</div><div class="review-value" id="rev-linkedin">—</div></div>
+            </div>
+          </div>
+
+          <!-- Motivation Review -->
+          <div class="review-section">
+            <div class="review-section-title">
+              <h3>Motivation & Availability</h3>
+              <button type="button" class="edit-btn" onclick="goToStep(3)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Edit</button>
+            </div>
+            <div class="review-grid">
+              <div class="review-item full-width"><div class="review-label">Why Idyll Productions?</div><div class="review-value" id="rev-whyJoin">—</div></div>
+              <div class="review-item full-width"><div class="review-label">Value to Team</div><div class="review-value" id="rev-valueToTeam">—</div></div>
+              <div class="review-item"><div class="review-label">Availability</div><div class="review-value" id="rev-availability">—</div></div>
+              <div class="review-item"><div class="review-label">Work Mode</div><div class="review-value" id="rev-workMode">—</div></div>
+              <div class="review-item"><div class="review-label">Commission Comfort</div><div class="review-value" id="rev-commissionComfort">—</div></div>
+              <div class="review-item full-width"><div class="review-label">Uploaded File</div><div class="review-value" id="rev-photo">No file uploaded</div></div>
+            </div>
+          </div>
+
+          <!-- Commission Agreement -->
+          <label class="agreement-box commission-agreement" for="agreeCommission" id="agreeCommissionBox">
+            <input type="checkbox" id="agreeCommission">
+            <span>I understand that this is a <strong>commission-only opportunity</strong> during the initial period and that I will only be paid when I successfully bring clients that generate revenue for Idyll Productions.</span>
+          </label>
+
+          <!-- General Agreement -->
+          <label class="agreement-box" for="agreeTerms" id="agreeTermsBox">
+            <input type="checkbox" id="agreeTerms">
+            <span>I confirm that all information provided is accurate and truthful. I understand the responsibilities of this role, and I agree that Idyll Productions may take appropriate action in accordance with the signed agreement if any terms are violated.</span>
+          </label>
+        </div>
+
+        <!-- ==================== STEP 5: SUCCESS ==================== -->
+        <div class="step-section success-section" data-step="5">
+          <div class="success-checkmark">
+            <svg viewBox="0 0 24 24"><path class="check-path" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h2>Application Submitted!</h2>
+          <p>Thank you for applying to Idyll Productions. Our team will review your application and get back to you if your profile matches our requirements.</p>
+          <div class="email-notice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            A confirmation email has been sent to your inbox
+          </div>
+        </div>
+
+      </form>
+
+      <!-- Navigation Buttons (hidden on step 0 and 5) -->
+      <div class="form-actions" id="formActions" style="display:none;">
+        <button type="button" class="btn btn-secondary" id="btnBack" onclick="prevStep()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Back
+        </button>
+        <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()">
+          Continue
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== STATE =====
+    let currentStep = 0;
+    const totalFormSteps = 4; // steps 1-4
+    let isSubmitting = false;
+
+    // ===== NAVIGATION =====
+    function goToStep(step) {
+      // Hide all sections
+      document.querySelectorAll('.step-section').forEach(s => s.classList.remove('active'));
+
+      // Show target section
+      const target = document.querySelector(`.step-section[data-step="${step}"]`);
+      if (target) {
+        target.classList.add('active');
+        // Re-trigger animation
+        target.style.animation = 'none';
+        target.offsetHeight; // force reflow
+        target.style.animation = '';
+      }
+
+      currentStep = step;
+
+      // Show/hide progress bar and actions
+      const progressEl = document.getElementById('progressContainer');
+      const actionsEl = document.getElementById('formActions');
+
+      if (step === 0 || step === 5) {
+        progressEl.style.display = 'none';
+        actionsEl.style.display = 'none';
+      } else {
+        progressEl.style.display = 'block';
+        actionsEl.style.display = 'flex';
+      }
+
+      // Update progress indicator
+      updateProgress(step);
+
+      // Update buttons
+      updateButtons(step);
+
+      // If review step, populate review data
+      if (step === 4) {
+        populateReview();
+      }
+
+    }
+
+    function nextStep() {
+      if (currentStep === 4) {
+        submitForm();
+        return;
+      }
+      if (!validateStep(currentStep)) return;
+      goToStep(currentStep + 1);
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        goToStep(currentStep - 1);
+      }
+    }
+
+    function updateProgress(step) {
+      document.querySelectorAll('.progress-step').forEach(el => {
+        const s = parseInt(el.dataset.step);
+        el.classList.remove('active', 'completed');
+        if (s === step) el.classList.add('active');
+        else if (s < step) el.classList.add('completed');
+      });
+
+      // Update lines
+      for (let i = 1; i <= 3; i++) {
+        const line = document.getElementById(`line-${i}-${i+1}`);
+        if (line) {
+          if (i < step) line.classList.add('filled');
+          else line.classList.remove('filled');
+        }
+      }
+    }
+
+    function updateButtons(step) {
+      const btnBack = document.getElementById('btnBack');
+      const btnNext = document.getElementById('btnNext');
+
+      // Back button visibility
+      btnBack.style.visibility = step <= 1 ? 'hidden' : 'visible';
+
+      // Next button text
+      if (step === 4) {
+        btnNext.innerHTML = `Submit Application <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+      } else {
+        btnNext.innerHTML = `Continue <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+      }
+    }
+
+    // ===== VALIDATION =====
+    function validateStep(step) {
+      let valid = true;
+
+      if (step === 1) {
+        valid = validateField('fullName', v => v.trim().length > 0) & valid;
+        valid = validateField('email', v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)) & valid;
+        valid = validateField('phone', v => v.trim().length >= 7) & valid;
+        // Gender validation
+        const genderSelected = document.querySelector('input[name="gender"]:checked');
+        const genderGroup = document.getElementById('group-gender');
+        if (!genderSelected) {
+          genderGroup.classList.add('error');
+          valid = false;
+        } else {
+          genderGroup.classList.remove('error');
+        }
+      }
+
+      if (step === 2) {
+        valid = validateField('professionalStatus', v => v !== '') & valid;
+      }
+
+      if (step === 3) {
+        valid = validateField('whyJoin', v => v.trim().length > 0) & valid;
+        valid = validateField('availability', v => v !== '') & valid;
+        valid = validateField('workMode', v => v !== '') & valid;
+        // Commission comfort validation
+        const commissionSelected = document.querySelector('input[name="commissionComfort"]:checked');
+        const commissionGroup = document.getElementById('group-commissionComfort');
+        if (!commissionSelected) {
+          commissionGroup.classList.add('error');
+          valid = false;
+        } else {
+          commissionGroup.classList.remove('error');
+        }
+      }
+
+      return valid;
+    }
+
+    function validateField(id, test) {
+      const el = document.getElementById(id);
+      const group = document.getElementById(`group-${id}`);
+      if (!el || !group) return true;
+      
+      if (!test(el.value)) {
+        group.classList.add('error');
+        return false;
+      } else {
+        group.classList.remove('error');
+        return true;
+      }
+    }
+
+    // Clear error on input
+    document.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('input', () => {
+        const group = el.closest('.form-group');
+        if (group) group.classList.remove('error');
+      });
+      el.addEventListener('change', () => {
+        const group = el.closest('.form-group');
+        if (group) group.classList.remove('error');
+      });
+    });
+
+    // ===== FILE UPLOAD =====
+    function handleFileSelect(input) {
+      const area = document.getElementById('fileUploadArea');
+      const nameEl = document.getElementById('fileName');
+      
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+          alert('File size must be under 5MB');
+          input.value = '';
+          return;
+        }
+        area.classList.add('has-file');
+        nameEl.textContent = '📎 ' + file.name;
+        nameEl.style.display = 'block';
+      } else {
+        area.classList.remove('has-file');
+        nameEl.style.display = 'none';
+      }
+    }
+
+    // ===== REVIEW =====
+    function populateReview() {
+      const getValue = id => {
+        const el = document.getElementById(id);
+        return el ? el.value : '';
+      };
+
+      document.getElementById('rev-fullName').textContent = getValue('fullName') || '—';
+      document.getElementById('rev-email').textContent = getValue('email') || '—';
+      document.getElementById('rev-phone').textContent = getValue('phone') || '—';
+      
+      const gender = document.querySelector('input[name="gender"]:checked');
+      document.getElementById('rev-gender').textContent = gender ? gender.value : '—';
+      
+      const dob = getValue('dob');
+      document.getElementById('rev-dob').textContent = dob ? new Date(dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : '—';
+      
+      document.getElementById('rev-city').textContent = getValue('city') || '—';
+      document.getElementById('rev-professionalStatus').textContent = getValue('professionalStatus') || '—';
+      document.getElementById('rev-experience').textContent = getValue('experience') || '—';
+      document.getElementById('rev-previousCompanies').textContent = getValue('previousCompanies') || 'N/A (Fresher)';
+      
+      // Skills
+      const checkedSkills = Array.from(document.querySelectorAll('input[name="skills"]:checked')).map(cb => cb.value);
+      document.getElementById('rev-skills').textContent = checkedSkills.length > 0 ? checkedSkills.join(', ') : '—';
+      
+      document.getElementById('rev-linkedin').textContent = getValue('linkedin') || 'Not provided';
+      document.getElementById('rev-whyJoin').textContent = getValue('whyJoin') || '—';
+      document.getElementById('rev-valueToTeam').textContent = getValue('valueToTeam') || 'Not provided';
+      document.getElementById('rev-availability').textContent = getValue('availability') || '—';
+      document.getElementById('rev-workMode').textContent = getValue('workMode') || '—';
+
+      // Commission comfort
+      const commissionComfort = document.querySelector('input[name="commissionComfort"]:checked');
+      document.getElementById('rev-commissionComfort').textContent = commissionComfort ? commissionComfort.value : '—';
+
+      // File
+      const fileInput = document.getElementById('photo');
+      document.getElementById('rev-photo').textContent = fileInput.files && fileInput.files[0] ? fileInput.files[0].name : 'No file uploaded';
+    }
+
+    // ===== COMMISSION COMFORT HANDLER =====
+    function handleCommissionChange() {
+      const noMsg = document.getElementById('commissionNoMsg');
+      const selected = document.querySelector('input[name="commissionComfort"]:checked');
+      if (selected && selected.value === 'No') {
+        noMsg.style.display = 'flex';
+      } else {
+        noMsg.style.display = 'none';
+      }
+    }
+
+    // ===== SUBMIT =====
+    async function submitForm() {
+      // Check commission agreement
+      const agreeCommission = document.getElementById('agreeCommission');
+      if (!agreeCommission.checked) {
+        agreeCommission.focus();
+        document.getElementById('agreeCommissionBox').style.borderColor = '#e74c3c';
+        setTimeout(() => {
+          document.getElementById('agreeCommissionBox').style.borderColor = '';
+        }, 2000);
+        return;
+      }
+
+      // Check general agreement
+      const agree = document.getElementById('agreeTerms');
+      if (!agree.checked) {
+        agree.focus();
+        document.getElementById('agreeTermsBox').style.borderColor = '#e74c3c';
+        setTimeout(() => {
+          document.getElementById('agreeTermsBox').style.borderColor = '';
+        }, 2000);
+        return;
+      }
+
+      if (isSubmitting) return;
+      isSubmitting = true;
+
+      const btnNext = document.getElementById('btnNext');
+      btnNext.disabled = true;
+      btnNext.innerHTML = '<span class="spinner"></span> Submitting...';
+
+      // Build FormData
+      const formData = new FormData();
+      formData.append('fullName', document.getElementById('fullName').value);
+      formData.append('email', document.getElementById('email').value);
+      formData.append('phone', document.getElementById('phone').value);
+      
+      const gender = document.querySelector('input[name="gender"]:checked');
+      formData.append('gender', gender ? gender.value : '');
+      
+      formData.append('dob', document.getElementById('dob').value);
+      formData.append('city', document.getElementById('city').value);
+      formData.append('professionalStatus', document.getElementById('professionalStatus').value);
+      formData.append('experience', document.getElementById('experience').value);
+      formData.append('previousCompanies', document.getElementById('previousCompanies').value);
+      
+      const skills = Array.from(document.querySelectorAll('input[name="skills"]:checked')).map(cb => cb.value).join(', ');
+      formData.append('skills', skills);
+      
+      formData.append('linkedin', document.getElementById('linkedin').value);
+      formData.append('whyJoin', document.getElementById('whyJoin').value);
+      formData.append('valueToTeam', document.getElementById('valueToTeam').value);
+      const commissionComfortVal = document.querySelector('input[name="commissionComfort"]:checked');
+      formData.append('commissionComfort', commissionComfortVal ? commissionComfortVal.value : '');
+      formData.append('availability', document.getElementById('availability').value);
+      formData.append('workMode', document.getElementById('workMode').value);
+
+      // File
+      const fileInput = document.getElementById('photo');
+      if (fileInput.files && fileInput.files[0]) {
+        formData.append('photo', fileInput.files[0]);
+      }
+
+      try {
+        const response = await fetch('/api/submit', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          goToStep(5);
+        } else {
+          throw new Error(result.error || 'Submission failed');
+        }
+      } catch (error) {
+        console.error('Submit error:', error);
+        alert('Something went wrong while submitting your application. Please try again.\n\nError: ' + error.message);
+        btnNext.disabled = false;
+        btnNext.innerHTML = `Submit Application <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>`;
+        isSubmitting = false;
+      }
+    }
+  </script>
+</body>
+</html>
