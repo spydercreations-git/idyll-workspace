@@ -89,7 +89,7 @@ const Invoice = ({ role, currency, isExporting }) => {
           </div>
         </div>
         
-        <div className="flex-col gap-6" style={{ width: '90%', marginLeft: 'auto' }}>
+        <div className="flex-col gap-6 right-column" style={{ width: '90%', marginLeft: 'auto' }}>
           <div className="flex items-start gap-4">
             <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '120px', paddingTop: isExporting ? '0.2rem' : '0.85rem' }}>Date</label>
             <RenderField isExporting={isExporting} type="date" value={date} onChange={e => setDate(e.target.value)} style={{ flex: 1 }} />
@@ -121,8 +121,9 @@ const Invoice = ({ role, currency, isExporting }) => {
 
       {isEditor ? (
         <>
-          <table className="invoice-table">
-            <thead>
+          <div className="invoice-table-wrapper">
+            <table className="invoice-table">
+              <thead>
               <tr>
                 <th style={{ width: '50%' }}>Item</th>
                 <th style={{ width: '15%' }}>Quantity</th>
@@ -144,15 +145,17 @@ const Invoice = ({ role, currency, isExporting }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
           <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
             <button className="btn btn-primary no-print" onClick={addItem}>Add Item</button>
           </div>
         </>
       ) : (
         <>
-          <table className="invoice-table">
-            <thead>
+          <div className="invoice-table-wrapper">
+            <table className="invoice-table">
+              <thead>
               <tr>
                 <th style={{ width: '50%' }}>Role</th>
                 <th style={{ width: '45%' }}>Amount</th>
@@ -170,7 +173,8 @@ const Invoice = ({ role, currency, isExporting }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
           <div style={{ marginTop: '1rem', marginBottom: '2rem' }}>
             <button className="btn btn-primary no-print" onClick={addPayroll}>Add Payroll</button>
           </div>
