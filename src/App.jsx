@@ -1,16 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Invoice from './components/Invoice';
 import CurrencyConverter from './components/CurrencyConverter';
 import Calculator from './components/Calculator';
 import PercentageCalculator from './components/PercentageCalculator';
-import { Download, Send, Settings, User } from 'lucide-react';
+import { Download, Send, Settings, User, Play, ChevronDown } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import idyllTrackLogo from './assets/IdyllTrackLogo.svg';
 
 function App() {
   const [role, setRole] = useState('editor'); // 'editor' or 'team_member'
   const [currency, setCurrency] = useState('$');
+  const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsCurrencyDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleDownload = () => {
     setIsExporting(true);
@@ -35,26 +47,82 @@ function App() {
   };
 
   return (
-    <div className="container app-layout" style={{ display: 'flex', gap: '2rem', padding: '2rem' }}>
+    <div className="container" style={{ padding: '2rem' }}>
       
-      {/* Main Invoice Area */}
-      <div style={{ flex: '1', minWidth: 0 }}>
-        <div className="flex justify-end items-center no-print" style={{ marginBottom: '3rem' }}>
+      {/* Global Header */}
+      <div className="flex justify-between items-center no-print" style={{ marginBottom: '2rem', flexWrap: 'wrap', gap: '1.5rem' }}>
+        {/* Brand Area */}
+          <div className="flex items-center" style={{ gap: '1.25rem' }}>
+            <img src={idyllTrackLogo} alt="Idyll Tracks Logo" style={{ height: '36px' }} />
+            <h1 style={{ fontSize: '1.6rem', fontFamily: "'SF Pro Display', -apple-system, sans-serif", fontWeight: 'bold', letterSpacing: '-0.02em', color: 'var(--black)', margin: 0 }}>
+              Idyll Invoicing
+            </h1>
+          </div>
+
           <div className="flex items-center gap-8 header-actions">
-            <select className="btn btn-outline" style={{ width: 'auto', borderColor: 'var(--primary)', color: 'var(--primary)', cursor: 'pointer', appearance: 'none', paddingRight: '2.5rem', backgroundImage: 'url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FF7300%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 1rem top 50%', backgroundSize: '0.65rem auto' }} value={currency} onChange={(e) => setCurrency(e.target.value)}>
-              <option value="$">USD ($)</option>
-              <option value="₹">INR (₹)</option>
-            </select>
+            <div className="relative" ref={dropdownRef} style={{ position: 'relative' }}>
+              <button 
+                className="btn btn-outline" 
+                style={{ minWidth: '120px', borderColor: 'var(--primary)', color: 'var(--primary)', justifyContent: 'space-between' }}
+                onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+              >
+                {currency === '$' ? 'USD ($)' : 'INR (₹)'}
+                <ChevronDown size={18} style={{ transition: 'transform 0.2s ease', transform: isCurrencyDropdownOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+              </button>
+              
+              {isCurrencyDropdownOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  marginTop: '0.5rem',
+                  width: '100%',
+                  backgroundColor: 'var(--white)',
+                  border: '1px solid var(--primary)',
+                  borderRadius: 'var(--border-radius)',
+                  boxShadow: '0 4px 12px rgba(255, 115, 0, 0.15)',
+                  zIndex: 50,
+                  overflow: 'hidden'
+                }}>
+                  <div 
+                    style={{ padding: '0.75rem 1rem', cursor: 'pointer', transition: 'background 0.2s ease', color: 'var(--black)', fontWeight: 500 }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 115, 0, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => { setCurrency('$'); setIsCurrencyDropdownOpen(false); }}
+                  >
+                    USD ($)
+                  </div>
+                  <div 
+                    style={{ padding: '0.75rem 1rem', cursor: 'pointer', transition: 'background 0.2s ease', color: 'var(--black)', fontWeight: 500 }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 115, 0, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    onClick={() => { setCurrency('₹'); setIsCurrencyDropdownOpen(false); }}
+                  >
+                    INR (₹)
+                  </div>
+                </div>
+              )}
+            </div>
             <button className="btn btn-outline" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', whiteSpace: 'nowrap' }} onClick={() => setRole(role === 'editor' ? 'team_member' : 'editor')}>
               <User size={18} /> Switch to {role === 'editor' ? 'Team Member' : 'Editor'}
+            </button>
+            <button className="btn btn-outline" style={{ borderColor: 'var(--primary)', color: 'var(--primary)', whiteSpace: 'nowrap' }} onClick={() => document.getElementById('tutorial-video')?.scrollIntoView({ behavior: 'smooth' })}>
+              <Play size={18} fill="currentColor" /> Watch Tutorial
             </button>
             <button className="btn btn-primary" style={{ whiteSpace: 'nowrap' }} onClick={handleDownload}>
               <Download size={18} /> Download PDF
             </button>
           </div>
-        </div>
+      </div>
 
-        <Invoice role={role} currency={currency} isExporting={isExporting} />
+      <div className="no-print" style={{ backgroundColor: '#fff3f3', border: '1px solid #ffcccc', color: '#cc0000', padding: '1rem', borderRadius: 'var(--border-radius)', marginBottom: '2rem', textAlign: 'center', fontWeight: 'bold', fontSize: '0.95rem' }}>
+        Don't use this website without the permission of finance team of production and this website is will be closed in some days. This is a temporary website. We are shifting into new. idyll productions workspace
+      </div>
+
+      <div className="app-layout" style={{ display: 'flex', gap: '2rem' }}>
+        {/* Main Invoice Area */}
+        <div style={{ flex: '1', minWidth: 0 }}>
+          <Invoice role={role} currency={currency} isExporting={isExporting} />
         
         {/* Company Policies & Info - OUTSIDE of PDF export */}
         <div className="card mt-8" style={{ marginTop: '2rem' }}>
@@ -99,7 +167,26 @@ function App() {
           <Calculator />
           <PercentageCalculator />
 
+          {/* Video Embed - Moved to Sidebar */}
+          <div id="tutorial-video" className="card no-print" style={{ border: '2px solid var(--primary)', padding: '1rem', marginTop: '0.5rem' }}>
+            <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '4px' }}>
+              <iframe 
+                style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                src="https://www.youtube.com/embed/Q1TZqnUKD4Q" 
+                title="YouTube video player" 
+                frameBorder="0" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                allowFullScreen>
+              </iframe>
+            </div>
+            <div style={{ marginTop: '1rem', fontSize: '0.85rem', color: 'var(--gray-600)', lineHeight: '1.4' }}>
+              <strong>Important:</strong> Watch this video before making an invoice for the first time. Watch it fully and follow the step-by-step guide. If you do not fill in your details according to it, your invoice will be rejected.
+            </div>
+          </div>
+
         </div>
+      </div>
+
       </div>
     </div>
   );

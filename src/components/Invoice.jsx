@@ -1,19 +1,19 @@
-import React, { useState } from 'react';
-import { Plus, Trash2, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, RefreshCw, ChevronDown } from 'lucide-react';
 import logoImg from '../assets/logo.png';
 import idyllTrackLogo from '../assets/IdyllTrackLogo.svg';
 
-const RenderField = ({ isExporting, value, type = "text", onChange, placeholder, style, isTextarea }) => {
+const RenderField = ({ isExporting, value, type = "text", onChange, placeholder, style, isTextarea, maxLength }) => {
   if (isExporting) {
-    return <div style={{ wordBreak: 'break-word', whiteSpace: 'pre-wrap', minHeight: '1.5rem', ...style }}>{value}</div>;
+    return <div style={{ overflowWrap: 'break-word', wordBreak: 'normal', whiteSpace: 'pre-wrap', minHeight: '1.5rem', ...style }}>{value}</div>;
   }
   if (isTextarea) {
-    return <textarea rows="3" placeholder={placeholder} value={value} onChange={onChange} style={style} onInput={e => {
+    return <textarea rows="3" placeholder={placeholder} value={value} onChange={onChange} style={style} maxLength={maxLength} onInput={e => {
       e.target.style.height = 'auto';
       e.target.style.height = e.target.scrollHeight + 'px';
     }} />;
   }
-  return <input type={type} placeholder={placeholder} value={value} onChange={onChange} style={style} />;
+  return <input type={type} placeholder={placeholder} value={value} onChange={onChange} style={style} maxLength={maxLength} />;
 };
 
 const Invoice = ({ role, currency, isExporting }) => {
@@ -24,13 +24,29 @@ const Invoice = ({ role, currency, isExporting }) => {
   
   // Uncontrolled states converted to controlled
   const [invoiceNo, setInvoiceNo] = useState('1');
-  const [from, setFrom] = useState('');
-  const [billTo, setBillTo] = useState('Idyll Productions Pvt. Ltd.');
+  const [fromName, setFromName] = useState('');
+  const [fromEmail, setFromEmail] = useState('');
+  const [fromPhone, setFromPhone] = useState('');
+  const [billToName, setBillToName] = useState('Idyll Productions Pvt. Ltd.');
+  const [billToEmail, setBillToEmail] = useState('');
+  const [billToPhone, setBillToPhone] = useState('');
   const [shipTo, setShipTo] = useState('');
   const [date, setDate] = useState('');
   const [paymentTerms, setPaymentTerms] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [invoiceType, setInvoiceType] = useState('100% Invoice');
+  const [isInvoiceTypeDropdownOpen, setIsInvoiceTypeDropdownOpen] = useState(false);
+  const invoiceTypeRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (invoiceTypeRef.current && !invoiceTypeRef.current.contains(event.target)) {
+        setIsInvoiceTypeDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const isEditor = role === 'editor';
 
@@ -44,13 +60,25 @@ const Invoice = ({ role, currency, isExporting }) => {
 
   const subtotal = calculateSubtotal();
 
-  const addItem = () => setItems([...items, { id: Date.now(), description: '', quantity: 1, rate: 0 }]);
+  const addItem = () => {
+    if (items.length < 4) {
+      setItems([...items, { id: Date.now(), description: '', quantity: 1, rate: 0 }]);
+    } else {
+      alert('Maximum 4 items allowed to ensure the invoice fits on a single A4 page.');
+    }
+  };
   const removeItem = (id) => setItems(items.filter(i => i.id !== id));
   const updateItem = (id, field, value) => {
     setItems(items.map(item => item.id === id ? { ...item, [field]: value } : item));
   };
 
-  const addPayroll = () => setPayroll([...payroll, { id: Date.now(), role: '', amount: 0 }]);
+  const addPayroll = () => {
+    if (payroll.length < 4) {
+      setPayroll([...payroll, { id: Date.now(), role: '', amount: 0 }]);
+    } else {
+      alert('Maximum 4 items allowed to ensure the invoice fits on a single A4 page.');
+    }
+  };
   const removePayroll = (id) => setPayroll(payroll.filter(i => i.id !== id));
   const updatePayroll = (id, field, value) => {
     setPayroll(payroll.map(item => item.id === id ? { ...item, [field]: value } : item));
@@ -64,55 +92,118 @@ const Invoice = ({ role, currency, isExporting }) => {
         </div>
         <div className="flex-col" style={{ alignItems: 'flex-end', gap: '0.5rem' }}>
           <h1 className="title" style={{ fontSize: '3rem', color: 'var(--black)' }}>INVOICE</h1>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1" style={{ justifyContent: 'flex-end' }}>
             <span style={{ fontWeight: '600', color: 'var(--gray-400)' }}>#</span>
-            <RenderField isExporting={isExporting} value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} style={{ width: '80px', textAlign: 'right' }} />
+            {isExporting ? (
+              <span style={{ fontWeight: '600', fontSize: '1.1rem' }}>{invoiceNo}</span>
+            ) : (
+              <RenderField isExporting={false} value={invoiceNo} onChange={e => setInvoiceNo(e.target.value)} style={{ width: '80px', textAlign: 'right' }} />
+            )}
           </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-8 mb-8">
-        <div className="flex-col gap-4">
-          <RenderField isExporting={isExporting} value={from} onChange={e => setFrom(e.target.value)} placeholder="Who is this from?" style={{ padding: '1rem', fontSize: '1rem', backgroundColor: 'var(--bg-light)' }} />
-          
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <div>
-              <label>Bill To</label>
-              <RenderField isExporting={isExporting} isTextarea value={billTo} onChange={e => setBillTo(e.target.value)} placeholder="Who is this to?" />
+        <div className="flex-col gap-8">
+          <div className="flex-col gap-4">
+            <label style={{ fontSize: '1.2rem', color: 'var(--black)', display: 'block', fontWeight: 'bold' }}>FROM</label>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>NAME</label>
+              <RenderField isExporting={isExporting} value={fromName} onChange={e => setFromName(e.target.value)} placeholder="Required Name" style={{ flex: 1 }} maxLength={50} />
             </div>
-            {isEditor && (
-              <div>
-                <label>Ship To</label>
-                <RenderField isExporting={isExporting} isTextarea value={shipTo} onChange={e => setShipTo(e.target.value)} placeholder="(optional)" />
-              </div>
-            )}
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>EMAIL ID</label>
+              <RenderField isExporting={isExporting} type="email" value={fromEmail} onChange={e => setFromEmail(e.target.value)} placeholder="Required Email ID" style={{ flex: 1 }} maxLength={50} />
+            </div>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>PHONE NUMBER</label>
+              <RenderField isExporting={isExporting} type="tel" value={fromPhone} onChange={e => setFromPhone(e.target.value)} placeholder="Required Phone Number" style={{ flex: 1 }} maxLength={20} />
+            </div>
+          </div>
+          
+          <div className="flex-col gap-4">
+            <label style={{ fontSize: '1.2rem', color: 'var(--black)', display: 'block', fontWeight: 'bold' }}>BILL TO</label>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>NAME</label>
+              <RenderField isExporting={isExporting} value={billToName} onChange={e => setBillToName(e.target.value)} placeholder="Required Name" style={{ flex: 1 }} maxLength={50} />
+            </div>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>EMAIL ID</label>
+              <RenderField isExporting={isExporting} type="email" value={billToEmail} onChange={e => setBillToEmail(e.target.value)} placeholder="Required Email ID" style={{ flex: 1 }} maxLength={50} />
+            </div>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>PHONE NUMBER</label>
+              <RenderField isExporting={isExporting} type="tel" value={billToPhone} onChange={e => setBillToPhone(e.target.value)} placeholder="Required Phone Number" style={{ flex: 1 }} maxLength={20} />
+            </div>
           </div>
         </div>
         
         <div className="flex-col gap-6 right-column" style={{ width: '90%', marginLeft: 'auto' }}>
-          <div className="flex items-start gap-4">
-            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '120px', paddingTop: isExporting ? '0.2rem' : '0.85rem' }}>Date</label>
+          <div className="flex items-center gap-4">
+            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>DATE</label>
             <RenderField isExporting={isExporting} type="date" value={date} onChange={e => setDate(e.target.value)} style={{ flex: 1 }} />
           </div>
-          <div className="flex items-start gap-4">
-            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '120px', paddingTop: isExporting ? '0.2rem' : '0.85rem' }}>Payment Terms</label>
-            <RenderField isExporting={isExporting} value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} style={{ flex: 1 }} />
+          <div className="flex items-center gap-4">
+            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>PAYMENT METHOD</label>
+            <RenderField isExporting={isExporting} value={paymentTerms} onChange={e => setPaymentTerms(e.target.value)} style={{ flex: 1 }} maxLength={30} />
           </div>
-          <div className="flex items-start gap-4">
-            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '120px', paddingTop: isExporting ? '0.2rem' : '0.85rem' }}>Due Date</label>
+          <div className="flex items-center gap-4">
+            <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>DUE DATE</label>
             <RenderField isExporting={isExporting} type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} style={{ flex: 1 }} />
           </div>
           {isEditor && (
-            <div className="flex items-start gap-4">
-              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '120px', paddingTop: isExporting ? '0.2rem' : '0.85rem' }}>Invoice Type</label>
+            <div className="flex items-center gap-4">
+              <label style={{ margin: 0, whiteSpace: 'nowrap', minWidth: '130px' }}>INVOICE TYPE</label>
               {isExporting ? (
                 <div style={{ flex: 1, padding: '0.2rem 0', minHeight: '1.5rem', wordBreak: 'break-word' }}>{invoiceType}</div>
               ) : (
-                <select style={{ flex: 1 }} value={invoiceType} onChange={e => setInvoiceType(e.target.value)}>
-                  <option>100% Invoice</option>
-                  <option>50% Invoice</option>
-                  <option>Upfront Payment</option>
-                </select>
+                <div className="relative" ref={invoiceTypeRef} style={{ flex: 1, position: 'relative' }}>
+                  <div 
+                    onClick={() => setIsInvoiceTypeDropdownOpen(!isInvoiceTypeDropdownOpen)}
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.85rem', 
+                      border: '1px solid var(--gray-200)', 
+                      borderRadius: 'var(--border-radius)', 
+                      backgroundColor: 'var(--bg-light)', 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <span>{invoiceType}</span>
+                    <ChevronDown size={16} style={{ transition: 'transform 0.2s ease', transform: isInvoiceTypeDropdownOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+                  </div>
+                  
+                  {isInvoiceTypeDropdownOpen && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      marginTop: '0.5rem',
+                      width: '100%',
+                      backgroundColor: 'var(--white)',
+                      border: '1px solid var(--primary)',
+                      borderRadius: 'var(--border-radius)',
+                      boxShadow: '0 4px 12px rgba(255, 115, 0, 0.15)',
+                      zIndex: 50,
+                      overflow: 'hidden'
+                    }}>
+                      {['100% Invoice', '50% Invoice', '25% Invoice'].map(option => (
+                        <div 
+                          key={option}
+                          style={{ padding: '0.75rem 1rem', cursor: 'pointer', transition: 'background 0.2s ease', color: 'var(--black)' }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 115, 0, 0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          onClick={() => { setInvoiceType(option); setIsInvoiceTypeDropdownOpen(false); }}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -181,15 +272,11 @@ const Invoice = ({ role, currency, isExporting }) => {
         </>
       )}
 
-      <div className="grid grid-cols-2 gap-8 mt-8">
-        <div className="flex-col gap-4 mt-8">
+      <div className="grid grid-cols-2 gap-8" style={{ marginTop: '4rem' }}>
+        <div className="flex-col gap-4">
           <div>
-            <label>Notes</label>
-            <RenderField isExporting={isExporting} isTextarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notes - any relevant information not already covered" />
-          </div>
-          <div>
-            <label>Terms</label>
-            <RenderField isExporting={isExporting} isTextarea value={terms} onChange={e => setTerms(e.target.value)} placeholder="Terms and conditions - late fees, payment methods, delivery schedule" />
+            <label>Payment Details and Notes</label>
+            <RenderField isExporting={isExporting} isTextarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Payment Details and Notes - any relevant information not already covered" maxLength={250} />
           </div>
         </div>
         

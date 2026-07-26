@@ -42,6 +42,9 @@ const CurrencyConverter = () => {
         <label style={{ marginTop: '0.5rem' }}>INR</label>
         <input type="number" value={inr} onChange={handleInrChange} style={{ backgroundColor: 'var(--white)' }} />
         <span style={{ fontSize: '0.8rem', color: 'var(--gray-400)', marginTop: '0.5rem' }}>1 USD = {rate.toFixed(2)} INR</span>
+        <span style={{ fontSize: '0.75rem', color: '#f97316', marginTop: '0.25rem', display: 'block' }}>
+          Note: This is not the exact real-time rate of USD or INR. Rates may vary as the API doesn't update by the second. It provides an estimated amount for general understanding.
+        </span>
       </div>
     </div>
   );
